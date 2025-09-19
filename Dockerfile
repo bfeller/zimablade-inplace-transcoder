@@ -1,5 +1,5 @@
-# Use Ubuntu 24.04 LTS with newer FFmpeg and Intel Quick Sync support
-FROM ubuntu:24.04
+# Use Ubuntu 22.04 LTS with newer FFmpeg from PPA
+FROM ubuntu:22.04
 
 # Set environment variables
 ENV DEBIAN_FRONTEND=noninteractive
@@ -7,29 +7,42 @@ ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 
 # Force rebuild - increment this number to invalidate cache
-ARG BUILD_VERSION=0.4.1-debug
+ARG BUILD_VERSION=0.4.2-debug
 ENV BUILD_VERSION=${BUILD_VERSION}
 ENV FORCE_REBUILD=${BUILD_VERSION}
 
-# Install system dependencies
+# Install system dependencies with better error handling
 RUN apt-get update && apt-get install -y \
     python3 \
     python3-pip \
     python3-venv \
     python3-dev \
-    ffmpeg \
     curl \
     gosu \
     software-properties-common \
     build-essential \
-    && rm -rf /var/lib/apt/lists/*
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* \
+    && echo "System dependencies installed successfully"
 
-# Install Intel media driver and newer FFmpeg with better QSV support
+# Install FFmpeg with QSV support from PPA
+RUN add-apt-repository ppa:savoury1/ffmpeg4 -y && \
+    apt-get update && \
+    apt-get install -y ffmpeg && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* && \
+    echo "FFmpeg with QSV support installed successfully"
+
+# Install Intel media driver and VAAPI utilities
 RUN apt-get update && apt-get install -y \
     intel-media-va-driver-non-free \
+    vainfo \
     libmfx1 \
     libmfx-tools \
-    && rm -rf /var/lib/apt/lists/* || echo "Intel media driver not available, skipping"
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* \
+    && echo "Intel media driver and VAAPI utilities installed successfully" || \
+    echo "Intel media driver not available, skipping"
 
 # Create application directory
 WORKDIR /app
@@ -55,6 +68,7 @@ RUN cat /tmp/build_info.txt
 RUN ffmpeg -version | head -1
 RUN ffmpeg -encoders | grep -i qsv || echo "No QSV encoders found"
 RUN ffmpeg -hwaccels | grep -i qsv || echo "No QSV hardware acceleration found"
+RUN vainfo || echo "VAAPI not available"
 
 # Clear Python bytecode cache to prevent caching issues
 RUN find ./src -name "*.pyc" -delete && find ./src -name "__pycache__" -type d -exec rm -rf {} + || true
