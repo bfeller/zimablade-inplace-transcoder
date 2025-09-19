@@ -17,6 +17,9 @@ class Transcoder:
         self.config = config
         self.logger = logging.getLogger(__name__)
         
+        # Test Intel Quick Sync availability
+        self._test_intel_quicksync()
+        
         # FFmpeg command template
         self.ffmpeg_cmd = [
             'ffmpeg',
@@ -34,6 +37,33 @@ class Transcoder:
             ''  # Output file (will be filled in)
         ]
     
+    def _test_intel_quicksync(self):
+        """Test if Intel Quick Sync is available."""
+        try:
+            # Test if QSV encoders are available
+            result = subprocess.run(['ffmpeg', '-encoders'], capture_output=True, text=True, timeout=10)
+            if 'h264_qsv' in result.stdout:
+                self.logger.info("Intel Quick Sync H.264 encoder is available")
+            else:
+                self.logger.warning("Intel Quick Sync H.264 encoder not found, falling back to software encoding")
+                # Fallback to software encoding
+                self.ffmpeg_cmd = [
+                    'ffmpeg',
+                    '-i', '',  # Input file (will be filled in)
+                    '-vf', 'scale=1920:1080',  # Scale to 1080p using software
+                    '-c:v', 'libx264',  # Software H.264 encoder
+                    '-preset', 'medium',  # Encoding preset
+                    '-crf', str(self.config.crf_quality),  # Quality setting
+                    '-c:a', 'aac',  # AAC audio codec
+                    '-b:a', f'{self.config.audio_bitrate}k',  # Audio bitrate
+                    '-c:s', 'mov_text',  # Subtitle codec for MP4
+                    '-map', '0',  # Map all streams
+                    '-y',  # Overwrite output file
+                    ''  # Output file (will be filled in)
+                ]
+        except Exception as e:
+            self.logger.warning("Could not test Intel Quick Sync availability: %s", e)
+    
     def transcode(self, input_path: str, output_path: str) -> bool:
         """Transcode a video file from input to output."""
         try:
@@ -50,6 +80,9 @@ class Transcoder:
             
             # Build FFmpeg command
             cmd = self._build_command(input_path, output_path)
+            
+            # Log the exact command for debugging
+            self.logger.info("Running FFmpeg command: %s", ' '.join(cmd))
             
             # Run FFmpeg
             result = self._run_ffmpeg(cmd)
@@ -96,9 +129,15 @@ class Transcoder:
                 self.logger.info("FFmpeg completed successfully")
                 return True
             else:
-                stderr = process.stderr.read()
-                self.logger.error("FFmpeg failed with return code %d: %s", 
-                                return_code, stderr)
+                # Read all stderr output for debugging
+                stderr_output = process.stderr.read()
+                stdout_output = process.stdout.read()
+                
+                self.logger.error("FFmpeg failed with return code %d", return_code)
+                self.logger.error("FFmpeg stderr: %s", stderr_output)
+                if stdout_output:
+                    self.logger.error("FFmpeg stdout: %s", stdout_output)
+                
                 return False
                 
         except subprocess.TimeoutExpired:
