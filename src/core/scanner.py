@@ -144,6 +144,8 @@ class FileScanner:
         
         # Check if already processed
         if self.db.is_file_processed(file_path):
+            if self.config.debug_mode:
+                self.logger.info("DEBUG: Skipping already processed file: %s", file_path.name)
             return False
         
         return True

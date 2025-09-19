@@ -21,7 +21,7 @@ from integrations.radarr import RadarrClient
 from utils.config import Config
 from utils.logging import setup_logging
 
-__version__ = "0.3.1-debug"
+__version__ = "0.3.2-debug"
 
 
 class ZimabladeTranscoder:
@@ -178,7 +178,7 @@ class ZimabladeTranscoder:
                 self._update_media_servers(file_info, output_filename)
                 
                 # Update database
-                self.db.mark_as_processed(file_info.path, output_filename)
+                self.db.mark_as_processed(file_info.path, output_filename, file_info.__dict__)
                 
                 self.logger.info("Successfully processed: %s", file_info.path)
             else:
