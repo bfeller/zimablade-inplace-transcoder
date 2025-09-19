@@ -1,5 +1,5 @@
-# Use Ubuntu 22.04 LTS (more stable and smaller than 24.04)
-FROM ubuntu:22.04
+# Use Ubuntu 24.04 LTS with native FFmpeg 6.x
+FROM ubuntu:24.04
 
 # Set environment variables
 ENV DEBIAN_FRONTEND=noninteractive
@@ -7,7 +7,7 @@ ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 
 # Force rebuild - increment this number to invalidate cache
-ARG BUILD_VERSION=0.5.9-debug
+ARG BUILD_VERSION=0.6.0-debug
 ENV BUILD_VERSION=${BUILD_VERSION}
 ENV FORCE_REBUILD=${BUILD_VERSION}
 
@@ -28,9 +28,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Intel media driver and VAAPI utilities (like Jellyfin)
+# Install Intel media driver and VAAPI utilities (Ubuntu 24.04)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    intel-media-va-driver \
+    intel-media-va-driver-non-free \
     vainfo \
     libmfx1 \
     libmfx-tools \
