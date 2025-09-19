@@ -142,6 +142,12 @@ class ZimabladeTranscoder:
             
             self.logger.info("DEBUG: About to call scan_for_files()...")
             self.logger.info("DEBUG: Calling scan_for_files with explicit call...")
+            
+            # Test if we can call the method at all
+            self.logger.info("DEBUG: Testing method call...")
+            method = getattr(self.scanner, 'scan_for_files')
+            self.logger.info("DEBUG: Got method: %s", method)
+            
             files_to_process = self.scanner.scan_for_files()
             
             if self.config.debug_mode:
