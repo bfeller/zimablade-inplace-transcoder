@@ -26,21 +26,13 @@ RUN pip3 install --no-cache-dir -r requirements.txt
 COPY src/ ./src/
 COPY config/ ./config/
 
-# Create data directories
-RUN mkdir -p /data/{database,logs,temp/{working,completed,failed}}
+# Create non-root user first
+RUN useradd -m -u 1000 transcoder
 
-# Set permissions
-RUN chmod 755 /data/ && \
-    chmod 755 /data/database/ && \
-    chmod 755 /data/logs/ && \
-    chmod 755 /data/temp/ && \
-    chmod 755 /data/temp/working/ && \
-    chmod 755 /data/temp/completed/ && \
-    chmod 755 /data/temp/failed/
-
-# Create non-root user
-RUN useradd -m -u 1000 transcoder && \
-    chown -R transcoder:transcoder /app /data
+# Create data directories with proper ownership
+RUN mkdir -p /data/{database,logs,temp/{working,completed,failed}} && \
+    chown -R transcoder:transcoder /data && \
+    chmod -R 755 /data
 
 USER transcoder
 
