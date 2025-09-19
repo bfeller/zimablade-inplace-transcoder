@@ -7,7 +7,7 @@ ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 
 # Force rebuild - increment this number to invalidate cache
-ARG BUILD_VERSION=0.5.0-debug
+ARG BUILD_VERSION=0.5.2-debug
 ENV BUILD_VERSION=${BUILD_VERSION}
 ENV FORCE_REBUILD=${BUILD_VERSION}
 
@@ -22,8 +22,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Install FFmpeg from Ubuntu repositories (smaller than PPA version)
+# Install FFmpeg with QSV support from newer PPA
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    software-properties-common \
+    && add-apt-repository ppa:ubuntuhandbook1/ffmpeg7 -y \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends \
     ffmpeg \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
@@ -44,6 +48,11 @@ COPY entrypoint.sh ./entrypoint.sh
 
 # Verify Python packages are working
 RUN python3 -c "import requests, yaml; print('Python dependencies verified successfully')"
+
+# Verify FFmpeg version and QSV support
+RUN ffmpeg -version | head -1
+RUN ffmpeg -encoders | grep -i qsv || echo "No QSV encoders found"
+RUN ffmpeg -hwaccels | grep -i qsv || echo "No QSV hardware acceleration found"
 
 # AGGRESSIVE CACHE BUSTING - Force complete rebuild
 RUN echo "BUILD_VERSION: ${BUILD_VERSION}" > /tmp/build_info.txt
