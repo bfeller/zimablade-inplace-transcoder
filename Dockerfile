@@ -7,7 +7,7 @@ ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 
 # Force rebuild - increment this number to invalidate cache
-ARG BUILD_VERSION=0.5.2-debug
+ARG BUILD_VERSION=0.5.3-debug
 ENV BUILD_VERSION=${BUILD_VERSION}
 ENV FORCE_REBUILD=${BUILD_VERSION}
 
@@ -22,12 +22,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Install FFmpeg with QSV support from newer PPA
+# Install FFmpeg from Ubuntu repositories (simple and stable)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    software-properties-common \
-    && add-apt-repository ppa:ubuntuhandbook1/ffmpeg7 -y \
-    && apt-get update \
-    && apt-get install -y --no-install-recommends \
     ffmpeg \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
