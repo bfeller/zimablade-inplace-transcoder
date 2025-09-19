@@ -155,13 +155,6 @@ class Transcoder:
                 import json
                 data = json.loads(result.stdout)
                 
-                # Check filename for HDR indicators
-                filename_lower = input_path.lower()
-                hdr_indicators = ['hdr', 'dv', 'dolby.vision', 'dolby vision', '10bit', 'hevc']
-                if any(indicator in filename_lower for indicator in hdr_indicators):
-                    self.logger.info("HDR/10-bit indicator found in filename: %s", input_path)
-                    return True
-                
                 # Check stream metadata for HDR and 10-bit content
                 for stream in data.get('streams', []):
                     if stream.get('codec_type') == 'video':
@@ -171,8 +164,9 @@ class Transcoder:
                         
                         self.logger.info("Video stream: codec=%s, pix_fmt=%s", codec_name, pix_fmt)
                         
-                        if codec_name == 'hevc' and '10' in pix_fmt:
-                            self.logger.info("10-bit HEVC detected - using software encoding for better compatibility")
+                        # Check for 10-bit content (most reliable indicator of QSV issues)
+                        if '10' in pix_fmt:
+                            self.logger.info("10-bit content detected - using software encoding for better compatibility")
                             return True
                         
                         # Check for HDR metadata
@@ -187,7 +181,7 @@ class Transcoder:
                             self.logger.info("Dolby Vision metadata found")
                             return True
                 
-                self.logger.info("No HDR/10-bit content detected")
+                self.logger.info("No HDR/10-bit content detected - file should work with Intel Quick Sync")
                 return False
             else:
                 self.logger.warning("Could not analyze file for HDR content: %s", result.stderr)
