@@ -88,6 +88,9 @@ class Transcoder:
     
     def transcode(self, input_path: str, output_path: str, original_path: str = None) -> bool:
         """Transcode a video file from input to output."""
+        self.logger.info("Transcoder.transcode() called with input_path=%s, output_path=%s, original_path=%s", 
+                        input_path, output_path, original_path)
+        
         try:
             self.logger.info("Starting transcoding: %s -> %s", input_path, output_path)
             
