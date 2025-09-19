@@ -4,9 +4,10 @@ FROM ubuntu:22.04
 # Set environment variables
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
 
 # Force rebuild - increment this number to invalidate cache
-ARG BUILD_VERSION=0.3.0-debug
+ARG BUILD_VERSION=0.3.1-debug
 ENV BUILD_VERSION=${BUILD_VERSION}
 
 # Install system dependencies
@@ -35,6 +36,9 @@ COPY entrypoint.sh ./entrypoint.sh
 
 # Clear Python bytecode cache to prevent caching issues
 RUN find ./src -name "*.pyc" -delete && find ./src -name "__pycache__" -type d -exec rm -rf {} + || true
+
+# Additional cache clearing before runtime
+RUN python3 -Bc "import compileall; compileall.compile_dir('./src', force=True)" || true
 
 # Create non-root user
 RUN useradd -m -u 1000 transcoder
