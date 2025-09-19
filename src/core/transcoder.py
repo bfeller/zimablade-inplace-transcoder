@@ -100,6 +100,77 @@ class Transcoder:
             output_dir = Path(output_path).parent
             output_dir.mkdir(parents=True, exist_ok=True)
             
+            # Check if file has HDR/Dolby Vision content that might not work with QSV
+            if self._has_hdr_content(input_path):
+                self.logger.info("File contains HDR/Dolby Vision content - using software encoding for better compatibility")
+                # Temporarily switch to software encoding for this file
+                original_cmd = self.ffmpeg_cmd.copy()
+                self._fallback_to_software()
+                success = self._transcode_with_current_settings(input_path, output_path)
+                # Restore original command
+                self.ffmpeg_cmd = original_cmd
+                return success
+            else:
+                # Use current settings (QSV if available)
+                return self._transcode_with_current_settings(input_path, output_path)
+                       
+        except Exception as e:
+            self.logger.error("Transcoding error: %s", e, exc_info=True)
+            return False
+    
+    def _has_hdr_content(self, input_path: str) -> bool:
+        """Check if file contains HDR/Dolby Vision content."""
+        try:
+            # Use ffprobe to check for HDR metadata
+            cmd = [
+                'ffprobe',
+                '-v', 'quiet',
+                '-print_format', 'json',
+                '-show_format',
+                '-show_streams',
+                input_path
+            ]
+            
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+            
+            if result.returncode == 0:
+                import json
+                data = json.loads(result.stdout)
+                
+                # Check filename for HDR indicators
+                filename_lower = input_path.lower()
+                hdr_indicators = ['hdr', 'dv', 'dolby.vision', 'dolby vision']
+                if any(indicator in filename_lower for indicator in hdr_indicators):
+                    self.logger.debug("HDR indicator found in filename: %s", input_path)
+                    return True
+                
+                # Check stream metadata for HDR
+                for stream in data.get('streams', []):
+                    if stream.get('codec_type') == 'video':
+                        # Check for HDR metadata
+                        side_data = stream.get('side_data_list', [])
+                        for side_data_item in side_data:
+                            if side_data_item.get('side_data_type') in ['Mastering display metadata', 'Content light level metadata']:
+                                self.logger.debug("HDR metadata found in stream")
+                                return True
+                        
+                        # Check for Dolby Vision
+                        if 'dolby' in str(stream.get('tags', {})).lower():
+                            self.logger.debug("Dolby Vision metadata found")
+                            return True
+                
+                return False
+            else:
+                self.logger.warning("Could not analyze file for HDR content: %s", result.stderr)
+                return False
+                
+        except Exception as e:
+            self.logger.warning("Error checking for HDR content: %s", e)
+            return False
+    
+    def _transcode_with_current_settings(self, input_path: str, output_path: str) -> bool:
+        """Transcode using current FFmpeg settings."""
+        try:
             # Build FFmpeg command
             cmd = self._build_command(input_path, output_path)
             
@@ -165,6 +236,11 @@ class Transcoder:
                 
                 if stdout_output:
                     self.logger.error("FFmpeg stdout: %s", stdout_output)
+                
+                # Check if this is an Intel Quick Sync initialization error
+                if any('Error initializing an internal MFX session' in line for line in stderr_lines):
+                    self.logger.warning("Intel Quick Sync initialization failed - this may be due to unsupported video format (HDR/DV)")
+                    self.logger.info("Consider using software encoding for this file type")
                 
                 return False
                 
