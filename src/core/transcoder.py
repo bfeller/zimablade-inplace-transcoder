@@ -101,7 +101,11 @@ class Transcoder:
             output_dir.mkdir(parents=True, exist_ok=True)
             
             # Check if file has HDR/Dolby Vision content that might not work with QSV
-            if self._has_hdr_content(input_path):
+            self.logger.info("Checking file for HDR/10-bit content: %s", input_path)
+            has_hdr = self._has_hdr_content(input_path)
+            self.logger.info("HDR/10-bit detection result: %s", has_hdr)
+            
+            if has_hdr:
                 self.logger.info("File contains HDR/Dolby Vision content - using software encoding for better compatibility")
                 # Temporarily switch to software encoding for this file
                 original_cmd = self.ffmpeg_cmd.copy()
@@ -111,6 +115,7 @@ class Transcoder:
                 self.ffmpeg_cmd = original_cmd
                 return success
             else:
+                self.logger.info("File appears compatible with Intel Quick Sync - using hardware acceleration")
                 # Use current settings (QSV if available)
                 return self._transcode_with_current_settings(input_path, output_path)
                        
@@ -141,7 +146,7 @@ class Transcoder:
                 filename_lower = input_path.lower()
                 hdr_indicators = ['hdr', 'dv', 'dolby.vision', 'dolby vision', '10bit', 'hevc']
                 if any(indicator in filename_lower for indicator in hdr_indicators):
-                    self.logger.debug("HDR/10-bit indicator found in filename: %s", input_path)
+                    self.logger.info("HDR/10-bit indicator found in filename: %s", input_path)
                     return True
                 
                 # Check stream metadata for HDR and 10-bit content
@@ -151,8 +156,10 @@ class Transcoder:
                         codec_name = stream.get('codec_name', '').lower()
                         pix_fmt = stream.get('pix_fmt', '').lower()
                         
+                        self.logger.info("Video stream: codec=%s, pix_fmt=%s", codec_name, pix_fmt)
+                        
                         if codec_name == 'hevc' and '10' in pix_fmt:
-                            self.logger.debug("10-bit HEVC detected - using software encoding for better compatibility")
+                            self.logger.info("10-bit HEVC detected - using software encoding for better compatibility")
                             return True
                         
                         # Check for HDR metadata
