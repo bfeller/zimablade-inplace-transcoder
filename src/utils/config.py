@@ -73,6 +73,9 @@ class Config:
         # Debug mode
         self.debug_mode = os.getenv('DEBUG_MODE', 'false').lower() == 'true'
         
+        # Database management
+        self.clear_database_on_start = os.getenv('CLEAR_DATABASE_ON_START', 'false').lower() == 'true'
+        
         # Load additional config from YAML files
         self._load_yaml_configs()
         

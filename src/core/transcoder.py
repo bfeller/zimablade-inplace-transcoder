@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Optional
 
 # Debug: Confirm this module is being loaded
-print("🚀🚀🚀 TRANSCODER MODULE LOADED - VERSION 0.3.4 🚀🚀🚀")
+print("🚀🚀🚀 TRANSCODER MODULE LOADED - VERSION 0.3.5 🚀🚀🚀")
 
 
 class Transcoder:

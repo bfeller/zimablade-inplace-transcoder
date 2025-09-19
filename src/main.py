@@ -21,7 +21,7 @@ from integrations.radarr import RadarrClient
 from utils.config import Config
 from utils.logging import setup_logging
 
-__version__ = "0.3.4-debug"
+__version__ = "0.3.5-debug"
 
 
 class ZimabladeTranscoder:
@@ -70,6 +70,17 @@ class ZimabladeTranscoder:
         try:
             # Initialize database
             self.db.initialize()
+            
+            # Clear database if requested
+            if self.config.clear_database_on_start:
+                self.logger.warning("CLEAR_DATABASE_ON_START is enabled - clearing all database data")
+                self.db.clear_all_data()
+                self.logger.warning("Database cleared - all files will be reanalyzed")
+            
+            # Log database stats for debugging
+            if self.config.debug_mode:
+                stats = self.db.get_database_stats()
+                self.logger.info("Database stats: %s", stats)
             
             # Main processing loop
             while True:

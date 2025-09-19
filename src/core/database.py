@@ -276,6 +276,78 @@ class Database:
         except Exception as e:
             self.logger.error("Error cleaning up old records: %s", e)
     
+    def clear_all_data(self):
+        """Clear all data from the database (for testing/reset purposes)."""
+        try:
+            cursor = self.connection.cursor()
+            
+            # Clear processed files table
+            cursor.execute('DELETE FROM processed_files')
+            processed_count = cursor.rowcount
+            
+            # Clear file analysis cache
+            cursor.execute('DELETE FROM file_analysis_cache')
+            cache_count = cursor.rowcount
+            
+            # Clear processing stats
+            cursor.execute('DELETE FROM processing_stats')
+            stats_count = cursor.rowcount
+            
+            self.connection.commit()
+            
+            self.logger.warning("CLEARED ALL DATABASE DATA:")
+            self.logger.warning("  - %d processed files records deleted", processed_count)
+            self.logger.warning("  - %d analysis cache records deleted", cache_count)
+            self.logger.warning("  - %d processing stats records deleted", stats_count)
+            
+        except Exception as e:
+            self.logger.error("Error clearing database: %s", e)
+            raise
+    
+    def get_database_stats(self) -> dict:
+        """Get database statistics for debugging."""
+        try:
+            cursor = self.connection.cursor()
+            
+            # Count processed files
+            cursor.execute('SELECT COUNT(*) as count FROM processed_files')
+            processed_count = cursor.fetchone()['count']
+            
+            # Count completed vs failed
+            cursor.execute('SELECT status, COUNT(*) as count FROM processed_files GROUP BY status')
+            status_counts = {row['status']: row['count'] for row in cursor.fetchall()}
+            
+            # Count cached analysis
+            cursor.execute('SELECT COUNT(*) as count FROM file_analysis_cache')
+            cache_count = cursor.fetchone()['count']
+            
+            return {
+                'processed_files': processed_count,
+                'status_counts': status_counts,
+                'cached_analysis': cache_count
+            }
+            
+        except Exception as e:
+            self.logger.error("Error getting database stats: %s", e)
+            return {}
+    
+    def clear_failed_files(self):
+        """Clear records of files that failed processing."""
+        try:
+            cursor = self.connection.cursor()
+            
+            # Delete failed processing records
+            cursor.execute('DELETE FROM processed_files WHERE status != "completed"')
+            failed_count = cursor.rowcount
+            
+            self.connection.commit()
+            
+            if failed_count > 0:
+                self.logger.info("Cleared %d failed file records from database", failed_count)
+            
+        except Exception as e:
+            self.logger.error("Error clearing failed files: %s", e)
+    
     def close(self):
         """Close database connection."""
         if self.connection:
