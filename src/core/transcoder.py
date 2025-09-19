@@ -145,7 +145,7 @@ class Transcoder:
                 '-print_format', 'json',
                 '-show_format',
                 '-show_streams',
-                input_path
+                str(input_path)  # Convert PosixPath to string
             ]
             
             self.logger.info("Running ffprobe command: %s", ' '.join(cmd))
