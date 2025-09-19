@@ -51,24 +51,35 @@ class FileScanner:
     def scan_for_files(self) -> List[FileInfo]:
         """Scan configured directories for files that need transcoding."""
         print("🔥🔥🔥 METHOD CALLED - VERSION 2.0 - UNIQUE ID: ABC123 🔥🔥🔥")
+        print("🔥🔥🔥 ABOUT TO LOG - VERSION 2.0 🔥🔥🔥")
         self.logger.info("🔥🔥🔥 SCANNER VERSION 2.0 - INCREMENTAL DEBUG - THIS SHOULD APPEAR 🔥🔥🔥")
+        print("🔥🔥🔥 LOGGED - VERSION 2.0 🔥🔥🔥")
         files_to_process = []
         
+        print("🔥🔥🔥 CHECKING DEBUG MODE 🔥🔥🔥")
         if self.config.debug_mode:
+            print("🔥🔥🔥 DEBUG MODE IS TRUE 🔥🔥🔥")
             self.logger.info("DEBUG: Starting file scan...")
             self.logger.info("DEBUG: Movies path: %s", self.config.movies_path)
             self.logger.info("DEBUG: TV path: %s", self.config.tv_path)
+        else:
+            print("🔥🔥🔥 DEBUG MODE IS FALSE 🔥🔥🔥")
         
+        print("🔥🔥🔥 CHECKING DIRECTORY EXISTENCE 🔥🔥🔥")
         self.logger.info("DEBUG: About to check directory existence...")
         
         # Check if directories exist
         movies_exists = self.config.movies_path and os.path.exists(self.config.movies_path)
         tv_exists = self.config.tv_path and os.path.exists(self.config.tv_path)
         
+        print(f"🔥🔥🔥 MOVIES EXISTS: {movies_exists} 🔥🔥🔥")
+        print(f"🔥🔥🔥 TV EXISTS: {tv_exists} 🔥🔥🔥")
+        
         if self.config.debug_mode:
             self.logger.info("DEBUG: Movies exists: %s", movies_exists)
             self.logger.info("DEBUG: TV exists: %s", tv_exists)
         
+        print("🔥🔥🔥 RETURNING EMPTY LIST 🔥🔥🔥")
         self.logger.info("DEBUG: Returning empty list for now")
         return []
     
