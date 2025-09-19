@@ -111,6 +111,7 @@ class Transcoder:
             
             # Try Intel Quick Sync first
             self.logger.info("Attempting Intel Quick Sync transcoding...")
+            self.logger.info("Intel Quick Sync attempt starting...")
             success = self._transcode_with_current_settings(input_path, output_path)
             
             if success:
@@ -119,7 +120,10 @@ class Transcoder:
             
             # Intel Quick Sync failed, try software encoding
             self.logger.warning("Intel Quick Sync failed, falling back to software encoding...")
+            self.logger.info("Switching to software encoding configuration...")
             self._fallback_to_software()
+            self.logger.info("Software encoding configuration applied, starting transcoding...")
+            self.logger.info("Software encoding attempt starting...")
             success = self._transcode_with_current_settings(input_path, output_path)
             
             if success:
@@ -196,11 +200,13 @@ class Transcoder:
     def _transcode_with_current_settings(self, input_path: str, output_path: str) -> bool:
         """Transcode using current FFmpeg settings."""
         try:
+            self.logger.info("Building FFmpeg command...")
             # Build FFmpeg command
             cmd = self._build_command(input_path, output_path)
             
             # Log the exact command for debugging
             self.logger.info("Running FFmpeg command: %s", ' '.join(cmd))
+            self.logger.info("Starting FFmpeg process...")
             
             # Run FFmpeg
             result = self._run_ffmpeg(cmd)
@@ -233,6 +239,7 @@ class Transcoder:
         """Run FFmpeg command and return success status."""
         try:
             self.logger.debug("Running FFmpeg command: %s", ' '.join(cmd))
+            self.logger.info("Launching FFmpeg subprocess...")
             
             # Run FFmpeg with progress monitoring
             process = subprocess.Popen(
@@ -243,9 +250,13 @@ class Transcoder:
                 bufsize=1
             )
             
+            self.logger.info("FFmpeg subprocess launched, PID: %d", process.pid)
+            self.logger.info("Starting progress monitoring...")
+            
             # Monitor progress
             self._monitor_progress(process)
             
+            self.logger.info("FFmpeg process completed, waiting for final return code...")
             # Wait for completion
             return_code = process.wait()
             
@@ -308,10 +319,10 @@ class Transcoder:
                     bitrate_info = next((p for p in parts if p.startswith('bitrate=')), '')
                     
                     if frame_info and fps_info:
-                        # Log progress every 30 seconds to avoid spam
+                        # Log progress every 10 seconds to provide better feedback
                         import time
                         current_time = time.time()
-                        if current_time - last_progress_time >= 30:
+                        if current_time - last_progress_time >= 10:
                             self.logger.info("Transcoding Progress: %s %s %s %s %s", 
                                             frame_info, fps_info, time_info, speed_info, bitrate_info)
                             last_progress_time = current_time
