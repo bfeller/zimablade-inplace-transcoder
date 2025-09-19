@@ -87,7 +87,7 @@ class Transcoder:
         ]
     
     def transcode(self, input_path: str, output_path: str, original_path: str = None) -> bool:
-        """Transcode a video file from input to output."""
+        """Transcode a video file from input to output with automatic fallback."""
         self.logger.info("Transcoder.transcode() called with input_path=%s, output_path=%s, original_path=%s", 
                         input_path, output_path, original_path)
         
@@ -103,31 +103,25 @@ class Transcoder:
             output_dir = Path(output_path).parent
             output_dir.mkdir(parents=True, exist_ok=True)
             
-            # Check if file has HDR/Dolby Vision content that might not work with QSV
-            # Use original_path for detection if provided, otherwise use input_path
-            detection_path = original_path if original_path else input_path
-            self.logger.info("Checking file for HDR/10-bit content: %s", detection_path)
+            # Try Intel Quick Sync first
+            self.logger.info("Attempting Intel Quick Sync transcoding...")
+            success = self._transcode_with_current_settings(input_path, output_path)
             
-            try:
-                has_hdr = self._has_hdr_content(detection_path)
-                self.logger.info("HDR/10-bit detection result: %s", has_hdr)
-            except Exception as e:
-                self.logger.error("Error during HDR detection: %s", e, exc_info=True)
-                has_hdr = False  # Default to QSV if detection fails
+            if success:
+                self.logger.info("Intel Quick Sync transcoding successful!")
+                return True
             
-            if has_hdr:
-                self.logger.info("File contains HDR/Dolby Vision content - using software encoding for better compatibility")
-                # Temporarily switch to software encoding for this file
-                original_cmd = self.ffmpeg_cmd.copy()
-                self._fallback_to_software()
-                success = self._transcode_with_current_settings(input_path, output_path)
-                # Restore original command
-                self.ffmpeg_cmd = original_cmd
-                return success
+            # Intel Quick Sync failed, try software encoding
+            self.logger.warning("Intel Quick Sync failed, falling back to software encoding...")
+            self._fallback_to_software()
+            success = self._transcode_with_current_settings(input_path, output_path)
+            
+            if success:
+                self.logger.info("Software encoding transcoding successful!")
+                return True
             else:
-                self.logger.info("File appears compatible with Intel Quick Sync - using hardware acceleration")
-                # Use current settings (QSV if available)
-                return self._transcode_with_current_settings(input_path, output_path)
+                self.logger.error("Both Intel Quick Sync and software encoding failed")
+                return False
                        
         except Exception as e:
             self.logger.error("Transcoding error: %s", e, exc_info=True)
