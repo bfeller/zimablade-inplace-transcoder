@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Optional
 
 # Debug: Confirm this module is being loaded
-print("🚀🚀🚀 TRANSCODER MODULE LOADED - VERSION 0.4.7 🚀🚀🚀")
+print("🚀🚀🚀 TRANSCODER MODULE LOADED - VERSION 0.5.8 🚀🚀🚀")
 
 
 class Transcoder:
@@ -100,9 +100,9 @@ class Transcoder:
     
     def transcode(self, input_path: str, output_path: str, original_path: str = None) -> bool:
         """Transcode a video file from input to output with automatic fallback."""
-        print("🚀🚀🚀 TRANSCODE METHOD CALLED - VERSION 0.3.4 🚀🚀🚀")
+        print("🚀🚀🚀 TRANSCODE METHOD CALLED - VERSION 0.5.8 🚀🚀🚀")
         print("🔥🔥🔥 TESTING LOGGER - THIS SHOULD APPEAR 🔥🔥🔥")
-        self.logger.info("🚀🚀🚀 VERSION 0.3.4 DEPLOYED - TRANSCODE METHOD STARTED 🚀🚀🚀")
+        self.logger.info("🚀🚀🚀 VERSION 0.5.8 DEPLOYED - TRANSCODE METHOD STARTED 🚀🚀🚀")
         self.logger.info("🔥🔥🔥 CACHE BUSTING - THIS WILL DEFINITELY WORK 🔥🔥🔥")
         self.logger.error("🚨🚨🚨 ERROR LEVEL TEST - THIS SHOULD DEFINITELY APPEAR 🚨🚨🚨")
         self.logger.info("Transcoder.transcode() called with input_path=%s, output_path=%s, original_path=%s", 
