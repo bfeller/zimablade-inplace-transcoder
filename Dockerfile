@@ -33,6 +33,9 @@ COPY src/ ./src/
 COPY config/ ./config/
 COPY entrypoint.sh ./entrypoint.sh
 
+# Clear Python bytecode cache to prevent caching issues
+RUN find ./src -name "*.pyc" -delete && find ./src -name "__pycache__" -type d -exec rm -rf {} + || true
+
 # Create non-root user
 RUN useradd -m -u 1000 transcoder
 
