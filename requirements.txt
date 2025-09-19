@@ -1,0 +1,9 @@
+# Python dependencies for Zimablade Transcoder
+
+# Core dependencies
+requests>=2.31.0
+PyYAML>=6.0
+
+# Optional dependencies for enhanced functionality
+# psutil>=5.9.0  # System monitoring
+# schedule>=1.2.0  # Advanced scheduling

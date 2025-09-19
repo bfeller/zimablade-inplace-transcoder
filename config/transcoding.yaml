@@ -1,0 +1,25 @@
+# Transcoding Configuration
+
+quality:
+  crf: 23              # Constant Rate Factor (0-51, lower = better quality)
+  audio_bitrate: 128   # Audio bitrate in kbps
+
+hardware:
+  enabled: true        # Enable hardware acceleration
+  type: qsv           # Hardware acceleration type (qsv for Intel Quick Sync)
+
+target:
+  resolution: 1080p   # Target resolution
+  preset: medium      # FFmpeg preset (ultrafast, superfast, veryfast, faster, fast, medium, slow, slower, veryslow)
+
+# File processing
+min_file_age_hours: 24    # Minimum age of files before processing
+min_bitrate_kbps: 500     # Minimum bitrate to process files
+
+# Time window for processing
+start_time: "02:00"       # Start processing time (24-hour format)
+end_time: "10:00"         # End processing time (24-hour format)
+
+# File management
+create_backups: false     # Create backup of original files
+sleep_interval: 300       # Sleep interval between scans (seconds)

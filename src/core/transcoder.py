@@ -1,0 +1,180 @@
+"""
+Transcoder module using FFmpeg with Intel Quick Sync.
+"""
+
+import os
+import logging
+import subprocess
+from pathlib import Path
+from typing import Optional
+
+
+class Transcoder:
+    """Handles video transcoding using FFmpeg with Intel Quick Sync."""
+    
+    def __init__(self, config):
+        """Initialize the transcoder."""
+        self.config = config
+        self.logger = logging.getLogger(__name__)
+        
+        # FFmpeg command template
+        self.ffmpeg_cmd = [
+            'ffmpeg',
+            '-hwaccel', 'qsv',  # Intel Quick Sync hardware acceleration
+            '-i', '',  # Input file (will be filled in)
+            '-vf', 'scale_qsv=1920:1080',  # Scale to 1080p using QSV
+            '-c:v', 'h264_qsv',  # H.264 encoder using QSV
+            '-preset', 'medium',  # Encoding preset
+            '-crf', str(self.config.crf_quality),  # Quality setting
+            '-c:a', 'aac',  # AAC audio codec
+            '-b:a', f'{self.config.audio_bitrate}k',  # Audio bitrate
+            '-c:s', 'mov_text',  # Subtitle codec for MP4
+            '-map', '0',  # Map all streams
+            '-y',  # Overwrite output file
+            ''  # Output file (will be filled in)
+        ]
+    
+    def transcode(self, input_path: str, output_path: str) -> bool:
+        """Transcode a video file from input to output."""
+        try:
+            self.logger.info("Starting transcoding: %s -> %s", input_path, output_path)
+            
+            # Validate input file
+            if not os.path.exists(input_path):
+                self.logger.error("Input file does not exist: %s", input_path)
+                return False
+            
+            # Create output directory if it doesn't exist
+            output_dir = Path(output_path).parent
+            output_dir.mkdir(parents=True, exist_ok=True)
+            
+            # Build FFmpeg command
+            cmd = self._build_command(input_path, output_path)
+            
+            # Run FFmpeg
+            result = self._run_ffmpeg(cmd)
+            
+            if result:
+                self.logger.info("Transcoding completed successfully: %s", output_path)
+                return True
+            else:
+                self.logger.error("Transcoding failed: %s", input_path)
+                return False
+                
+        except Exception as e:
+            self.logger.error("Transcoding error: %s", e, exc_info=True)
+            return False
+    
+    def _build_command(self, input_path: str, output_path: str) -> list:
+        """Build the FFmpeg command with input and output paths."""
+        cmd = self.ffmpeg_cmd.copy()
+        cmd[3] = input_path  # Set input file
+        cmd[-1] = output_path  # Set output file
+        return cmd
+    
+    def _run_ffmpeg(self, cmd: list) -> bool:
+        """Run FFmpeg command and return success status."""
+        try:
+            self.logger.debug("Running FFmpeg command: %s", ' '.join(cmd))
+            
+            # Run FFmpeg with progress monitoring
+            process = subprocess.Popen(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                universal_newlines=True,
+                bufsize=1
+            )
+            
+            # Monitor progress
+            self._monitor_progress(process)
+            
+            # Wait for completion
+            return_code = process.wait()
+            
+            if return_code == 0:
+                self.logger.info("FFmpeg completed successfully")
+                return True
+            else:
+                stderr = process.stderr.read()
+                self.logger.error("FFmpeg failed with return code %d: %s", 
+                                return_code, stderr)
+                return False
+                
+        except subprocess.TimeoutExpired:
+            self.logger.error("FFmpeg command timed out")
+            process.kill()
+            return False
+        except Exception as e:
+            self.logger.error("Error running FFmpeg: %s", e)
+            return False
+    
+    def _monitor_progress(self, process):
+        """Monitor FFmpeg progress and log updates."""
+        try:
+            while True:
+                line = process.stderr.readline()
+                if not line:
+                    break
+                
+                # Parse progress information
+                if 'frame=' in line and 'fps=' in line:
+                    # Extract frame and fps info
+                    parts = line.strip().split()
+                    frame_info = next((p for p in parts if p.startswith('frame=')), '')
+                    fps_info = next((p for p in parts if p.startswith('fps=')), '')
+                    time_info = next((p for p in parts if p.startswith('time=')), '')
+                    
+                    if frame_info and fps_info:
+                        self.logger.debug("Progress: %s %s %s", 
+                                        frame_info, fps_info, time_info)
+                        
+        except Exception as e:
+            self.logger.warning("Error monitoring progress: %s", e)
+    
+    def get_file_info(self, file_path: str) -> Optional[dict]:
+        """Get video file information using ffprobe."""
+        try:
+            cmd = [
+                'ffprobe',
+                '-v', 'quiet',
+                '-print_format', 'json',
+                '-show_format',
+                '-show_streams',
+                file_path
+            ]
+            
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+            
+            if result.returncode == 0:
+                import json
+                return json.loads(result.stdout)
+            else:
+                self.logger.error("ffprobe failed: %s", result.stderr)
+                return None
+                
+        except Exception as e:
+            self.logger.error("Error getting file info: %s", e)
+            return None
+    
+    def estimate_transcoding_time(self, input_path: str) -> Optional[int]:
+        """Estimate transcoding time in seconds."""
+        try:
+            # Get file duration
+            info = self.get_file_info(input_path)
+            if not info:
+                return None
+            
+            duration = float(info.get('format', {}).get('duration', 0))
+            
+            # Rough estimate: 0.1x realtime for Intel Quick Sync
+            # This is a conservative estimate
+            estimated_time = int(duration * 0.1)
+            
+            self.logger.debug("Estimated transcoding time for %s: %d seconds", 
+                            input_path, estimated_time)
+            return estimated_time
+            
+        except Exception as e:
+            self.logger.warning("Could not estimate transcoding time: %s", e)
+            return None

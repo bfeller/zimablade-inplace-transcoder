@@ -1,0 +1,17 @@
+# Logging Configuration
+
+level: INFO              # Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+file: /data/logs/transcoder.log
+
+rotation:
+  max_size: 10485760     # Max log file size in bytes (10MB)
+  backup_count: 5        # Number of backup files to keep
+
+# Log format
+format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+date_format: "%Y-%m-%d %H:%M:%S"
+
+# Console logging
+console:
+  enabled: true
+  level: INFO

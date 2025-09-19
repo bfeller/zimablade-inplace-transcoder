@@ -1,0 +1,104 @@
+version: '3.8'
+
+services:
+  zimablade-transcoder:
+    build: .
+    container_name: zimablade-transcoder
+    restart: unless-stopped
+    
+    environment:
+      # User and timezone (matching your existing setup)
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/New_York
+      
+      # Paths (matching your existing volume mounts)
+      - MOVIES_PATH=/data/movies
+      - TV_PATH=/data/tv
+      - WORKING_PATH=/data/temp/working
+      - COMPLETED_PATH=/data/temp/completed
+      - FAILED_PATH=/data/temp/failed
+      - DATABASE_PATH=/data/database/transcoding.db
+      
+      # Processing settings
+      - MIN_FILE_AGE_HOURS=24
+      - MIN_BITRATE_KBPS=500
+      - SLEEP_INTERVAL=300
+      
+      # Time window (night processing)
+      - START_TIME=02:00
+      - END_TIME=23:00
+      
+      # Transcoding settings
+      - CRF_QUALITY=23
+      - AUDIO_BITRATE=128
+      - TARGET_RESOLUTION=1080p
+      - FFMPEG_PRESET=medium
+      
+      # Hardware acceleration
+      - USE_HWACCEL=true
+      - HARDWARE_ACCEL=qsv
+      
+      # File management
+      - CREATE_BACKUPS=false
+      
+      # Sonarr/Radarr integration (matching your existing setup)
+      - SONARR_ENABLED=true
+      - SONARR_URL=http://sonarr:8989
+      - SONARR_API_KEY=${SONARR_API_KEY}
+      
+      - RADARR_ENABLED=true
+      - RADARR_URL=http://radarr:7878
+      - RADARR_API_KEY=${RADARR_API_KEY}
+      
+      # Logging
+      - LOG_LEVEL=INFO
+      - LOG_FILE=/data/logs/transcoder.log
+      - LOG_MAX_SIZE=10485760
+      - LOG_BACKUP_COUNT=5
+    
+    volumes:
+      # Media directories (matching your existing setup)
+      - type: bind
+        source: /mnt/MainStorage/movies
+        target: /data/movies
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /mnt/MainStorage/tv
+        target: /data/tv
+        bind:
+          create_host_path: true
+      
+      # Working directories (using SSD for performance)
+      - type: bind
+        source: /mnt/SSD/transcoding
+        target: /data/temp
+        bind:
+          create_host_path: true
+      
+      # Data persistence (matching your existing pattern)
+      - type: bind
+        source: /DATA/AppData/zimablade-transcoder
+        target: /data
+        bind:
+          create_host_path: true
+      
+      # Configuration
+      - type: bind
+        source: ./config
+        target: /app/config
+        bind:
+          create_host_path: true
+    
+    devices:
+      # Intel Quick Sync device access
+      - /dev/dri:/dev/dri
+    
+    # Use same network as your existing services
+    network_mode: "container:gluetun"
+    
+    labels:
+      - "com.docker.compose.project=zimablade-transcoder"
+      - "com.docker.compose.service=zimablade-transcoder"
+      - "traefik.enable=false"
