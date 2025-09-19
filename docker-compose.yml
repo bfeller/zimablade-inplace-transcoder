@@ -58,7 +58,7 @@ services:
       - LOG_BACKUP_COUNT=5
       
       # Debug mode (set to true for testing)
-      - DEBUG_MODE=false
+      - DEBUG_MODE=true
     
     volumes:
       # Media directories (matching your existing setup)
