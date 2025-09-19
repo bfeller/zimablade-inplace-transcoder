@@ -17,9 +17,11 @@ class FileScanner:
     
     def __init__(self, config, database):
         """Initialize the file scanner."""
+        self.logger = logging.getLogger(__name__)
+        self.logger.info("DEBUG: FileScanner.__init__() called")
+        
         self.config = config
         self.db = database
-        self.logger = logging.getLogger(__name__)
         
         # Supported video extensions
         self.video_extensions = {'.mkv', '.mp4', '.avi', '.mov', '.m4v'}
@@ -30,6 +32,8 @@ class FileScanner:
             '1440p', '2K', '1440', '2k',
             '1080p', '1080',  # Only if not already optimized
         }
+        
+        self.logger.info("DEBUG: FileScanner.__init__() completed")
     
     def scan_for_files(self) -> List[FileInfo]:
         """Scan configured directories for files that need transcoding."""
