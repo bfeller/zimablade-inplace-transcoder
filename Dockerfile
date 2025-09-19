@@ -7,7 +7,7 @@ ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 
 # Force rebuild - increment this number to invalidate cache
-ARG BUILD_VERSION=0.6.1-debug
+ARG BUILD_VERSION=0.6.2-debug
 ENV BUILD_VERSION=${BUILD_VERSION}
 ENV FORCE_REBUILD=${BUILD_VERSION}
 
@@ -74,9 +74,8 @@ RUN python3 -c "import py_compile; import os; [py_compile.compile(os.path.join(r
 # Create non-root user (only if it doesn't exist)
 RUN useradd -m -u 1000 transcoder || echo "User transcoder already exists"
 
-# Create data directories with proper ownership
+# Create data directories (ownership handled by entrypoint)
 RUN mkdir -p /data/{database,logs,temp/{working,completed,failed}} && \
-    chown -R transcoder:transcoder /data && \
     chmod -R 755 /data
 
 # Make entrypoint script executable
