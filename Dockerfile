@@ -13,6 +13,7 @@ RUN apt-get update && apt-get install -y \
     intel-media-va-driver-non-free \
     vainfo \
     curl \
+    su-exec \
     && rm -rf /var/lib/apt/lists/*
 
 # Create application directory
@@ -27,7 +28,7 @@ COPY src/ ./src/
 COPY config/ ./config/
 COPY entrypoint.sh ./entrypoint.sh
 
-# Create non-root user first
+# Create non-root user
 RUN useradd -m -u 1000 transcoder
 
 # Create data directories with proper ownership
@@ -38,8 +39,8 @@ RUN mkdir -p /data/{database,logs,temp/{working,completed,failed}} && \
 # Make entrypoint script executable
 RUN chmod +x ./entrypoint.sh
 
-# Switch to transcoder user
-USER transcoder
+# Note: We don't switch to transcoder user here because the entrypoint
+# needs to run as root to fix volume permissions, then switch to transcoder
 
 # Expose any ports if needed (none for this application)
 # EXPOSE 8080
