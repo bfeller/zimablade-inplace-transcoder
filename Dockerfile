@@ -10,11 +10,12 @@ RUN apt-get update && apt-get install -y \
     python3 \
     python3-pip \
     ffmpeg \
-    intel-media-va-driver \
-    vainfo \
     curl \
-    su-exec \
+    gosu \
     && rm -rf /var/lib/apt/lists/*
+
+# Install Intel media driver separately (may not be available in all repos)
+RUN apt-get update && apt-get install -y intel-media-va-driver || echo "Intel media driver not available, skipping"
 
 # Create application directory
 WORKDIR /app
