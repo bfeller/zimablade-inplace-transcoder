@@ -182,7 +182,10 @@ class ZimabladeTranscoder:
                 
                 self.logger.info("Successfully processed: %s", file_info.path)
             else:
-                raise Exception("Transcoding failed")
+                self.logger.error("Transcoding failed for %s", file_info.path)
+                # Don't raise exception - let the transcoder handle retries internally
+                # The transcoder will have already tried both Intel Quick Sync and software encoding
+                return
                 
         except Exception as e:
             self.logger.error("Failed to process %s: %s", file_info.path, e)
