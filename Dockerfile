@@ -34,7 +34,11 @@ RUN mkdir -p /data/{database,logs,temp/{working,completed,failed}} && \
     chown -R transcoder:transcoder /data && \
     chmod -R 755 /data
 
+# Switch to transcoder user
 USER transcoder
+
+# Ensure data directories exist and are writable (in case volume mount overrides)
+RUN mkdir -p /data/{database,logs,temp/{working,completed,failed}}
 
 # Expose any ports if needed (none for this application)
 # EXPOSE 8080
