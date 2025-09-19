@@ -256,9 +256,33 @@ class ZimabladeTranscoder:
     def _cleanup(self):
         """Cleanup resources on shutdown."""
         self.logger.info("Cleaning up resources...")
+        
+        # Clean up any files in working directory
+        self._cleanup_working_files()
+        
         # Close database connection
         if hasattr(self.db, 'close'):
             self.db.close()
+    
+    def _cleanup_working_files(self):
+        """Clean up files in working directory on shutdown."""
+        try:
+            import shutil
+            working_dir = Path(self.config.working_path)
+            if working_dir.exists():
+                for file_path in working_dir.iterdir():
+                    if file_path.is_file():
+                        self.logger.warning("Found unfinished transcoding file: %s", file_path.name)
+                        # Move back to original location or failed directory
+                        # This is a simplified cleanup - in production you'd want more sophisticated handling
+                        failed_path = Path(self.config.failed_path) / file_path.name
+                        try:
+                            shutil.move(str(file_path), str(failed_path))
+                            self.logger.info("Moved unfinished file to failed directory: %s", file_path.name)
+                        except Exception as e:
+                            self.logger.error("Failed to move unfinished file: %s", e)
+        except Exception as e:
+            self.logger.error("Error during cleanup: %s", e)
 
 
 def main():

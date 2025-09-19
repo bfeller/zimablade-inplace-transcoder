@@ -9,6 +9,10 @@ services:
     container_name: zimablade-transcoder
     restart: unless-stopped
     
+    # Graceful shutdown configuration
+    stop_grace_period: 60s
+    stop_signal: SIGTERM
+    
     environment:
       # User and timezone (matching your existing setup)
       - PUID=1000

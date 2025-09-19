@@ -112,6 +112,7 @@ class Transcoder:
     def _monitor_progress(self, process):
         """Monitor FFmpeg progress and log updates."""
         try:
+            last_progress_time = 0
             while True:
                 line = process.stderr.readline()
                 if not line:
@@ -124,10 +125,20 @@ class Transcoder:
                     frame_info = next((p for p in parts if p.startswith('frame=')), '')
                     fps_info = next((p for p in parts if p.startswith('fps=')), '')
                     time_info = next((p for p in parts if p.startswith('time=')), '')
+                    speed_info = next((p for p in parts if p.startswith('speed=')), '')
+                    bitrate_info = next((p for p in parts if p.startswith('bitrate=')), '')
                     
                     if frame_info and fps_info:
-                        self.logger.debug("Progress: %s %s %s", 
-                                        frame_info, fps_info, time_info)
+                        # Log progress every 30 seconds to avoid spam
+                        import time
+                        current_time = time.time()
+                        if current_time - last_progress_time >= 30:
+                            self.logger.info("Transcoding Progress: %s %s %s %s %s", 
+                                            frame_info, fps_info, time_info, speed_info, bitrate_info)
+                            last_progress_time = current_time
+                        else:
+                            self.logger.debug("Progress: %s %s %s %s %s", 
+                                            frame_info, fps_info, time_info, speed_info, bitrate_info)
                         
         except Exception as e:
             self.logger.warning("Error monitoring progress: %s", e)
