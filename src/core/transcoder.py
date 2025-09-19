@@ -44,25 +44,44 @@ class Transcoder:
             result = subprocess.run(['ffmpeg', '-encoders'], capture_output=True, text=True, timeout=10)
             if 'h264_qsv' in result.stdout:
                 self.logger.info("Intel Quick Sync H.264 encoder is available")
+                
+                # Test device access
+                try:
+                    device_test = subprocess.run(['ffmpeg', '-f', 'lavfi', '-i', 'testsrc=duration=1:size=320x240:rate=1', 
+                                                '-vf', 'scale_qsv=640:480', '-c:v', 'h264_qsv', '-f', 'null', '-'], 
+                                               capture_output=True, text=True, timeout=10)
+                    if device_test.returncode == 0:
+                        self.logger.info("Intel Quick Sync device access test successful")
+                    else:
+                        self.logger.warning("Intel Quick Sync device access failed: %s", device_test.stderr)
+                        self._fallback_to_software()
+                except Exception as e:
+                    self.logger.warning("Intel Quick Sync device test failed: %s", e)
+                    self._fallback_to_software()
             else:
                 self.logger.warning("Intel Quick Sync H.264 encoder not found, falling back to software encoding")
-                # Fallback to software encoding
-                self.ffmpeg_cmd = [
-                    'ffmpeg',
-                    '-i', '',  # Input file (will be filled in)
-                    '-vf', 'scale=1920:1080',  # Scale to 1080p using software
-                    '-c:v', 'libx264',  # Software H.264 encoder
-                    '-preset', 'medium',  # Encoding preset
-                    '-crf', str(self.config.crf_quality),  # Quality setting
-                    '-c:a', 'aac',  # AAC audio codec
-                    '-b:a', f'{self.config.audio_bitrate}k',  # Audio bitrate
-                    '-c:s', 'mov_text',  # Subtitle codec for MP4
-                    '-map', '0',  # Map all streams
-                    '-y',  # Overwrite output file
-                    ''  # Output file (will be filled in)
-                ]
+                self._fallback_to_software()
         except Exception as e:
             self.logger.warning("Could not test Intel Quick Sync availability: %s", e)
+            self._fallback_to_software()
+    
+    def _fallback_to_software(self):
+        """Fallback to software encoding."""
+        self.logger.info("Using software encoding fallback")
+        self.ffmpeg_cmd = [
+            'ffmpeg',
+            '-i', '',  # Input file (will be filled in)
+            '-vf', 'scale=1920:1080',  # Scale to 1080p using software
+            '-c:v', 'libx264',  # Software H.264 encoder
+            '-preset', 'medium',  # Encoding preset
+            '-crf', str(self.config.crf_quality),  # Quality setting
+            '-c:a', 'aac',  # AAC audio codec
+            '-b:a', f'{self.config.audio_bitrate}k',  # Audio bitrate
+            '-c:s', 'mov_text',  # Subtitle codec for MP4
+            '-map', '0',  # Map all streams
+            '-y',  # Overwrite output file
+            ''  # Output file (will be filled in)
+        ]
     
     def transcode(self, input_path: str, output_path: str) -> bool:
         """Transcode a video file from input to output."""
@@ -129,12 +148,18 @@ class Transcoder:
                 self.logger.info("FFmpeg completed successfully")
                 return True
             else:
-                # Read all stderr output for debugging
-                stderr_output = process.stderr.read()
+                # Get stored stderr lines from progress monitoring
+                stderr_lines = getattr(process, '_stderr_lines', [])
                 stdout_output = process.stdout.read()
                 
                 self.logger.error("FFmpeg failed with return code %d", return_code)
-                self.logger.error("FFmpeg stderr: %s", stderr_output)
+                if stderr_lines:
+                    self.logger.error("FFmpeg stderr:")
+                    for line in stderr_lines:
+                        self.logger.error("  %s", line)
+                else:
+                    self.logger.error("No stderr output captured")
+                
                 if stdout_output:
                     self.logger.error("FFmpeg stdout: %s", stdout_output)
                 
@@ -152,10 +177,15 @@ class Transcoder:
         """Monitor FFmpeg progress and log updates."""
         try:
             last_progress_time = 0
+            stderr_lines = []
+            
             while True:
                 line = process.stderr.readline()
                 if not line:
                     break
+                
+                # Store all stderr lines for error reporting
+                stderr_lines.append(line.strip())
                 
                 # Parse progress information
                 if 'frame=' in line and 'fps=' in line:
@@ -178,6 +208,13 @@ class Transcoder:
                         else:
                             self.logger.debug("Progress: %s %s %s %s %s", 
                                             frame_info, fps_info, time_info, speed_info, bitrate_info)
+                
+                # Check for error messages
+                elif any(keyword in line.lower() for keyword in ['error', 'failed', 'cannot', 'invalid']):
+                    self.logger.error("FFmpeg error detected: %s", line.strip())
+            
+            # Store stderr lines for later retrieval
+            process._stderr_lines = stderr_lines
                         
         except Exception as e:
             self.logger.warning("Error monitoring progress: %s", e)

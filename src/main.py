@@ -110,9 +110,6 @@ class ZimabladeTranscoder:
         """Main file processing logic."""
         self.logger.info("Starting file processing cycle")
         
-        if self.config.debug_mode:
-            self.logger.info("DEBUG: About to call scanner.scan_for_files()")
-            self.logger.info("DEBUG: Scanner object: %s", type(self.scanner))
         
         # Scan for files that need transcoding
         try:
