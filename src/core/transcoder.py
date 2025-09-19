@@ -20,12 +20,12 @@ class Transcoder:
         # Test Intel Quick Sync availability
         self._test_intel_quicksync()
         
-        # FFmpeg command template
+        # FFmpeg command template - use hybrid approach for better compatibility
         self.ffmpeg_cmd = [
             'ffmpeg',
             '-hwaccel', 'qsv',  # Intel Quick Sync hardware acceleration
             '-i', '',  # Input file (will be filled in)
-            '-vf', 'scale_qsv=1920:1080',  # Scale to 1080p using QSV
+            '-vf', 'scale=1920:1080',  # Scale to 1080p using software (more compatible)
             '-c:v', 'h264_qsv',  # H.264 encoder using QSV
             '-preset', 'medium',  # Encoding preset
             '-crf', str(self.config.crf_quality),  # Quality setting
@@ -45,19 +45,21 @@ class Transcoder:
             if 'h264_qsv' in result.stdout:
                 self.logger.info("Intel Quick Sync H.264 encoder is available")
                 
-                # Test device access
+                # Test device access with realistic scenario
                 try:
-                    # Simple test: just check if we can initialize QSV without transcoding
-                    device_test = subprocess.run(['ffmpeg', '-hwaccel', 'qsv', '-f', 'lavfi', '-i', 'testsrc=duration=0.1:size=64x64:rate=1', 
-                                                '-c:v', 'h264_qsv', '-f', 'null', '-'], 
-                                               capture_output=True, text=True, timeout=10)
+                    # Test with software scaling + QSV encoding (our actual approach)
+                    device_test = subprocess.run(['ffmpeg', '-hwaccel', 'qsv', '-f', 'lavfi', '-i', 'testsrc=duration=0.1:size=1920x1080:rate=1', 
+                                                '-vf', 'scale=1280:720', '-c:v', 'h264_qsv', '-f', 'null', '-'], 
+                                               capture_output=True, text=True, timeout=15)
                     if device_test.returncode == 0:
                         self.logger.info("Intel Quick Sync device access test successful")
                     else:
-                        self.logger.warning("Intel Quick Sync device access failed, falling back to software")
+                        self.logger.warning("Intel Quick Sync device access failed: %s", device_test.stderr[:200] if device_test.stderr else "Unknown error")
+                        self.logger.info("Falling back to software encoding")
                         self._fallback_to_software()
                 except Exception as e:
                     self.logger.warning("Intel Quick Sync device test failed: %s", e)
+                    self.logger.info("Falling back to software encoding")
                     self._fallback_to_software()
             else:
                 self.logger.warning("Intel Quick Sync H.264 encoder not found, falling back to software encoding")
