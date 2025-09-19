@@ -20,16 +20,13 @@ class Transcoder:
         # Test Intel Quick Sync availability
         self._test_intel_quicksync()
         
-        # Force software encoding since Intel Quick Sync is not working
-        self.logger.warning("Intel Quick Sync is not working properly - forcing software encoding for all files")
-        self._fallback_to_software()
-        
-        # FFmpeg command template - software encoding with subtitle handling
+        # FFmpeg command template - Intel Quick Sync with subtitle handling
         self.ffmpeg_cmd = [
             'ffmpeg',
+            '-hwaccel', 'qsv',  # Intel Quick Sync hardware acceleration
             '-i', '',  # Input file (will be filled in)
-            '-vf', 'scale=1920:1080',  # Scale to 1080p using software
-            '-c:v', 'libx264',  # Software H.264 encoder
+            '-vf', 'scale=1920:1080',  # Scale to 1080p using software (more compatible)
+            '-c:v', 'h264_qsv',  # H.264 encoder using QSV
             '-preset', 'medium',  # Encoding preset
             '-crf', str(self.config.crf_quality),  # Quality setting
             '-c:a', 'aac',  # AAC audio codec
