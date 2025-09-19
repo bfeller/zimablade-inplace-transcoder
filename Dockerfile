@@ -1,5 +1,5 @@
-# Use Ubuntu 22.04 LTS with newer FFmpeg from PPA (more stable)
-FROM ubuntu:22.04
+# Use Ubuntu 24.04 LTS with newer FFmpeg from PPA
+FROM ubuntu:24.04
 
 # Set environment variables
 ENV DEBIAN_FRONTEND=noninteractive
@@ -7,41 +7,50 @@ ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 
 # Force rebuild - increment this number to invalidate cache
-ARG BUILD_VERSION=0.4.4-debug
+ARG BUILD_VERSION=0.4.6-debug
 ENV BUILD_VERSION=${BUILD_VERSION}
 ENV FORCE_REBUILD=${BUILD_VERSION}
 
-# Install packages one by one to identify the problematic package
-RUN apt-get update
-RUN apt-get install -y python3
-RUN apt-get install -y python3-pip
-RUN apt-get install -y curl
-RUN apt-get install -y sudo
-RUN apt-get clean
-RUN rm -rf /var/lib/apt/lists/*
-RUN echo "Basic dependencies installed successfully"
+# Install basic packages first with proper error handling
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install additional packages separately
-RUN apt-get update && apt-get install -y \
+# Install Python and basic tools
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 \
+    python3-pip \
     python3-venv \
-    python3-dev \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install additional system tools
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    sudo \
     software-properties-common \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install development tools
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3-dev \
     build-essential \
     && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* \
-    && echo "Additional dependencies installed successfully"
+    && rm -rf /var/lib/apt/lists/*
 
-# Install FFmpeg with QSV support from PPA (Ubuntu 22.04 compatible)
+# Install FFmpeg with QSV support from PPA (Ubuntu 24.04 compatible)
 RUN add-apt-repository ppa:savoury1/ffmpeg4 -y && \
     apt-get update && \
-    apt-get install -y ffmpeg && \
+    apt-get install -y --no-install-recommends ffmpeg && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* && \
     echo "FFmpeg with QSV support installed successfully"
 
-# Install Intel media driver and VAAPI utilities (Ubuntu 22.04 compatible)
-RUN apt-get update && apt-get install -y \
-    intel-media-va-driver \
+# Install Intel media driver and VAAPI utilities (Ubuntu 24.04 compatible)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    intel-media-va-driver-non-free \
     vainfo \
     libmfx1 \
     libmfx-tools \
