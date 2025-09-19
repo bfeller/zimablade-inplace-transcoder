@@ -2,10 +2,10 @@ version: '3.8'
 
 services:
   zimablade-transcoder:
-      build:
-        context: .
-        args:
-          BUILD_VERSION: 0.4.0-debug
+    build:
+      context: .
+      args:
+        BUILD_VERSION: 0.4.0-debug
     container_name: zimablade-transcoder
     restart: unless-stopped
     
