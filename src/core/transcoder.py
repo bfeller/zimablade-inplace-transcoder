@@ -85,7 +85,7 @@ class Transcoder:
             '-c:s', 'mov_text',  # Convert subtitles to MP4-compatible format
             '-map', '0:v:0',  # Map video stream
             '-map', '0:a:m:language:eng?',  # Map English audio if available, fallback to first audio
-            '-map', '0:s',  # Map all subtitle streams
+            '-map', '0:s:m:codec_name:subrip?',  # Map only SRT subtitles (skip PGS)
             '-y',  # Overwrite output file
             ''  # Output file (will be filled in)
         ]
