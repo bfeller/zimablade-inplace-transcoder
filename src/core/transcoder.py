@@ -139,14 +139,22 @@ class Transcoder:
                 
                 # Check filename for HDR indicators
                 filename_lower = input_path.lower()
-                hdr_indicators = ['hdr', 'dv', 'dolby.vision', 'dolby vision']
+                hdr_indicators = ['hdr', 'dv', 'dolby.vision', 'dolby vision', '10bit', 'hevc']
                 if any(indicator in filename_lower for indicator in hdr_indicators):
-                    self.logger.debug("HDR indicator found in filename: %s", input_path)
+                    self.logger.debug("HDR/10-bit indicator found in filename: %s", input_path)
                     return True
                 
-                # Check stream metadata for HDR
+                # Check stream metadata for HDR and 10-bit content
                 for stream in data.get('streams', []):
                     if stream.get('codec_type') == 'video':
+                        # Check for 10-bit HEVC (often problematic with QSV)
+                        codec_name = stream.get('codec_name', '').lower()
+                        pix_fmt = stream.get('pix_fmt', '').lower()
+                        
+                        if codec_name == 'hevc' and '10' in pix_fmt:
+                            self.logger.debug("10-bit HEVC detected - using software encoding for better compatibility")
+                            return True
+                        
                         # Check for HDR metadata
                         side_data = stream.get('side_data_list', [])
                         for side_data_item in side_data:
