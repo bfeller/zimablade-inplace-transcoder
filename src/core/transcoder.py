@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Optional
 
 # Debug: Confirm this module is being loaded
-print("🚀🚀🚀 TRANSCODER MODULE LOADED - VERSION 0.3.5 🚀🚀🚀")
+print("🚀🚀🚀 TRANSCODER MODULE LOADED - VERSION 0.3.6 🚀🚀🚀")
 
 
 class Transcoder:
@@ -88,7 +88,8 @@ class Transcoder:
             '-c:s', 'mov_text',  # Convert subtitles to MP4-compatible format
             '-map', '0:v:0',  # Map video stream
             '-map', '0:a:m:language:eng?',  # Map English audio if available, fallback to first audio
-            '-map', '0:s:m:codec_name:subrip?',  # Map only SRT subtitles (skip PGS)
+            '-map', '0:s:0',  # Map only the first subtitle stream (English)
+            '-map', '0:s:1',  # Map the second subtitle stream (English SDH)
             '-y',  # Overwrite output file
             ''  # Output file (will be filled in)
         ]
@@ -266,12 +267,17 @@ class Transcoder:
             self.logger.info("FFmpeg subprocess launched, PID: %d", process.pid)
             self.logger.info("Starting progress monitoring...")
             
-            # Monitor progress
+            # Monitor progress with timeout
             self._monitor_progress(process)
             
             self.logger.info("FFmpeg process completed, waiting for final return code...")
-            # Wait for completion
-            return_code = process.wait()
+            # Wait for completion with timeout (30 minutes max)
+            try:
+                return_code = process.wait(timeout=1800)  # 30 minutes timeout
+            except subprocess.TimeoutExpired:
+                self.logger.error("FFmpeg process timed out after 30 minutes - killing process")
+                process.kill()
+                return False
             
             if return_code == 0:
                 self.logger.info("FFmpeg completed successfully")

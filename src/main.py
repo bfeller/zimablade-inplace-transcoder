@@ -21,7 +21,7 @@ from integrations.radarr import RadarrClient
 from utils.config import Config
 from utils.logging import setup_logging
 
-__version__ = "0.3.5-debug"
+__version__ = "0.3.6-debug"
 
 
 class ZimabladeTranscoder:
