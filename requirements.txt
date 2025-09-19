@@ -3,7 +3,3 @@
 # Core dependencies
 requests>=2.31.0
 PyYAML>=6.0
-
-# Ensure compatibility with Ubuntu 24.04
-setuptools>=65.0.0
-wheel>=0.40.0

@@ -5,7 +5,7 @@ services:
     build:
       context: .
       args:
-        BUILD_VERSION: 0.4.9-debug
+        BUILD_VERSION: 0.5.0-debug
     container_name: zimablade-transcoder
     restart: unless-stopped
     

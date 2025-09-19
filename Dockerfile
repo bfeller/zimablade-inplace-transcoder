@@ -7,14 +7,16 @@ ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 
 # Force rebuild - increment this number to invalidate cache
-ARG BUILD_VERSION=0.4.9-debug
+ARG BUILD_VERSION=0.5.0-debug
 ENV BUILD_VERSION=${BUILD_VERSION}
 ENV FORCE_REBUILD=${BUILD_VERSION}
 
-# Install minimal packages first
+# Install Python and basic tools
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 \
     python3-pip \
+    python3-requests \
+    python3-yaml \
     curl \
     sudo \
     && apt-get clean \
@@ -35,16 +37,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Create application directory
 WORKDIR /app
 
-# Copy requirements and install Python dependencies
-COPY requirements.txt .
-RUN python3 -m pip install --upgrade pip
-RUN python3 -m pip install --no-cache-dir -r requirements.txt
-RUN python3 -c "import requests, yaml; print('Dependencies installed successfully')"
-
 # Copy application code
 COPY src/ ./src/
 COPY config/ ./config/
 COPY entrypoint.sh ./entrypoint.sh
+
+# Verify Python packages are working
+RUN python3 -c "import requests, yaml; print('Python dependencies verified successfully')"
 
 # AGGRESSIVE CACHE BUSTING - Force complete rebuild
 RUN echo "BUILD_VERSION: ${BUILD_VERSION}" > /tmp/build_info.txt
