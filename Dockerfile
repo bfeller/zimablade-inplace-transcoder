@@ -6,7 +6,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONUNBUFFERED=1
 
 # Force rebuild - increment this number to invalidate cache
-ARG BUILD_VERSION=2.0
+ARG BUILD_VERSION=0.2.0-debug
 ENV BUILD_VERSION=${BUILD_VERSION}
 
 # Install system dependencies
