@@ -124,7 +124,14 @@ class ZimabladeTranscoder:
         
         # Scan for files that need transcoding
         try:
+            if self.config.debug_mode:
+                self.logger.info("DEBUG: Testing scanner object methods")
+                self.logger.info("DEBUG: Scanner has scan_for_files method: %s", hasattr(self.scanner, 'scan_for_files'))
+                self.logger.info("DEBUG: Scanner config: %s", self.scanner.config)
+                self.logger.info("DEBUG: Scanner db: %s", type(self.scanner.db))
+            
             files_to_process = self.scanner.scan_for_files()
+            
             if self.config.debug_mode:
                 self.logger.info("DEBUG: Scanner returned %d files", len(files_to_process))
         except Exception as e:
