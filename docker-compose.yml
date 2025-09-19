@@ -5,7 +5,7 @@ services:
     build:
       context: .
       args:
-        BUILD_VERSION: 0.5.7-debug
+        BUILD_VERSION: 0.5.8-debug
     container_name: zimablade-transcoder
     restart: unless-stopped
     
@@ -56,11 +56,11 @@ services:
       
       # Sonarr/Radarr integration (matching your existing setup)
       - SONARR_ENABLED=true
-      - SONARR_URL=http://sonarr:8989
+      - SONARR_URL=http://localhost:8989
       - SONARR_API_KEY=9960ae572c5e4183b814658a23e92635
       
       - RADARR_ENABLED=true
-      - RADARR_URL=http://radarr:7878
+      - RADARR_URL=http://localhost:7878
       - RADARR_API_KEY=4114270d129e4971a5892fc9e4638983
       
       # Logging
