@@ -12,7 +12,7 @@ from models.file_info import FileInfo
 from utils.helpers import get_video_info
 
 # Debug: Confirm this module is being loaded
-print("🔥🔥🔥 SCANNER MODULE LOADED - VERSION 2.0 🔥🔥🔥")
+print("SCANNER MODULE LOADED - VERSION 2.0")
 
 
 class FileScanner:
@@ -50,104 +50,77 @@ class FileScanner:
     
     def scan_for_files(self) -> List[FileInfo]:
         """Scan configured directories for files that need transcoding."""
-        print("🔥🔥🔥 METHOD CALLED - VERSION 2.0 - UNIQUE ID: ABC123 🔥🔥🔥")
-        print("🔥🔥🔥 ABOUT TO LOG - VERSION 2.0 🔥🔥🔥")
-        self.logger.info("🔥🔥🔥 SCANNER VERSION 2.0 - INCREMENTAL DEBUG - THIS SHOULD APPEAR 🔥🔥🔥")
-        print("🔥🔥🔥 LOGGED - VERSION 2.0 🔥🔥🔥")
+        self.logger.info("Starting file scan...")
         files_to_process = []
         
-        print("🔥🔥🔥 CHECKING DEBUG MODE 🔥🔥🔥")
         if self.config.debug_mode:
-            print("🔥🔥🔥 DEBUG MODE IS TRUE 🔥🔥🔥")
-            self.logger.info("DEBUG: Starting file scan...")
             self.logger.info("DEBUG: Movies path: %s", self.config.movies_path)
             self.logger.info("DEBUG: TV path: %s", self.config.tv_path)
-        else:
-            print("🔥🔥🔥 DEBUG MODE IS FALSE 🔥🔥🔥")
-        
-        print("🔥🔥🔥 CHECKING DIRECTORY EXISTENCE 🔥🔥🔥")
-        self.logger.info("DEBUG: About to check directory existence...")
         
         # Check if directories exist
         movies_exists = self.config.movies_path and os.path.exists(self.config.movies_path)
         tv_exists = self.config.tv_path and os.path.exists(self.config.tv_path)
         
-        print(f"🔥🔥🔥 MOVIES EXISTS: {movies_exists} 🔥🔥🔥")
-        print(f"🔥🔥🔥 TV EXISTS: {tv_exists} 🔥🔥🔥")
-        
         if self.config.debug_mode:
             self.logger.info("DEBUG: Movies exists: %s", movies_exists)
             self.logger.info("DEBUG: TV exists: %s", tv_exists)
         
-        print("🔥🔥🔥 STARTING ACTUAL SCANNING 🔥🔥🔥")
-        
         # Scan movies directory
         if movies_exists:
-            print("🔥🔥🔥 SCANNING MOVIES DIRECTORY 🔥🔥🔥")
+            self.logger.info("Scanning movies directory...")
             try:
                 movie_files = self._scan_directory(self.config.movies_path, is_tv=False)
                 files_to_process.extend(movie_files)
-                print(f"🔥🔥🔥 FOUND {len(movie_files)} MOVIE FILES 🔥🔥🔥")
+                self.logger.info("Found %d movie files", len(movie_files))
             except Exception as e:
-                print(f"🔥🔥🔥 ERROR SCANNING MOVIES: {e} 🔥🔥🔥")
-                self.logger.error("DEBUG: Error scanning movies directory: %s", e)
+                self.logger.error("Error scanning movies directory: %s", e)
         
         # Scan TV shows directory
         if tv_exists:
-            print("🔥🔥🔥 SCANNING TV DIRECTORY 🔥🔥🔥")
+            self.logger.info("Scanning TV directory...")
             try:
                 tv_files = self._scan_directory(self.config.tv_path, is_tv=True)
                 files_to_process.extend(tv_files)
-                print(f"🔥🔥🔥 FOUND {len(tv_files)} TV FILES 🔥🔥🔥")
+                self.logger.info("Found %d TV files", len(tv_files))
             except Exception as e:
-                print(f"🔥🔥🔥 ERROR SCANNING TV: {e} 🔥🔥🔥")
-                self.logger.error("DEBUG: Error scanning TV directory: %s", e)
+                self.logger.error("Error scanning TV directory: %s", e)
         
-        print(f"🔥🔥🔥 TOTAL FILES TO PROCESS: {len(files_to_process)} 🔥🔥🔥")
         self.logger.info("Found %d files total for processing", len(files_to_process))
         return files_to_process
     
     def _scan_directory(self, directory: str, is_tv: bool) -> List[FileInfo]:
         """Scan a single directory for files."""
-        print(f"🔥🔥🔥 _SCAN_DIRECTORY CALLED: {directory} 🔥🔥🔥")
         files = []
         directory_path = Path(directory)
         
         if not directory_path.exists():
-            print(f"🔥🔥🔥 DIRECTORY DOES NOT EXIST: {directory} 🔥🔥🔥")
             self.logger.warning("Directory does not exist: %s", directory)
             return files
         
-        print(f"🔥🔥🔥 DIRECTORY EXISTS, STARTING SCAN: {directory} 🔥🔥🔥")
         if self.config.debug_mode:
             self.logger.info("DEBUG: Walking directory tree: %s", directory)
         
         file_count = 0
         processed_count = 0
         
-        print("🔥🔥🔥 STARTING DIRECTORY WALK 🔥🔥🔥")
         # Walk through directory recursively
         for file_path in directory_path.rglob('*'):
             file_count += 1
             
             if self.config.debug_mode and file_count % 100 == 0:
-                print(f"🔥🔥🔥 SCANNED {file_count} FILES, FOUND {processed_count} CANDIDATES 🔥🔥🔥")
                 self.logger.info("DEBUG: Scanned %d files, found %d candidates", file_count, processed_count)
             
             if self._should_process_file(file_path):
                 processed_count += 1
                 if self.config.debug_mode:
-                    print(f"🔥🔥🔥 ANALYZING FILE: {file_path.name} 🔥🔥🔥")
                     self.logger.info("DEBUG: Analyzing file: %s", file_path.name)
                 
                 file_info = self._analyze_file(file_path, is_tv)
                 if file_info and self._needs_transcoding(file_info):
                     files.append(file_info)
                     if self.config.debug_mode:
-                        print(f"🔥🔥🔥 ADDED TO QUEUE: {file_path.name} 🔥🔥🔥")
                         self.logger.info("DEBUG: Added to transcoding queue: %s", file_path.name)
         
-        print(f"🔥🔥🔥 DIRECTORY SCAN COMPLETE: {len(files)} FILES 🔥🔥🔥")
         if self.config.debug_mode:
             self.logger.info("DEBUG: Directory scan complete - %d total files, %d candidates, %d for transcoding", 
                            file_count, processed_count, len(files))

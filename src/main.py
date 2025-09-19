@@ -69,19 +69,11 @@ class ZimabladeTranscoder:
         
         try:
             # Initialize database
-            if self.config.debug_mode:
-                self.logger.info("DEBUG: About to initialize database")
             self.db.initialize()
-            if self.config.debug_mode:
-                self.logger.info("DEBUG: Database initialized successfully")
             
             # Main processing loop
             while True:
-                if self.config.debug_mode:
-                    self.logger.info("DEBUG: Checking if should process...")
                 if self._should_process():
-                    if self.config.debug_mode:
-                        self.logger.info("DEBUG: Should process - calling _process_files()")
                     self._process_files()
                 else:
                     self.logger.info("Outside processing window, sleeping...")
@@ -124,36 +116,9 @@ class ZimabladeTranscoder:
         
         # Scan for files that need transcoding
         try:
-            if self.config.debug_mode:
-                self.logger.info("DEBUG: Testing scanner object methods")
-                self.logger.info("DEBUG: Scanner has scan_for_files method: %s", hasattr(self.scanner, 'scan_for_files'))
-                self.logger.info("DEBUG: Scanner config: %s", self.scanner.config)
-                self.logger.info("DEBUG: Scanner db: %s", type(self.scanner.db))
-                
-                # Test simple method first
-                self.logger.info("DEBUG: Testing simple scanner method...")
-                test_result = self.scanner.test_method()
-                self.logger.info("DEBUG: Test method result: %s", test_result)
-                
-                # Test simplified scan method
-                self.logger.info("DEBUG: Testing simplified scan method...")
-                simple_result = self.scanner.scan_for_files_simple()
-                self.logger.info("DEBUG: Simple scan result: %d files", len(simple_result))
-            
-            self.logger.info("DEBUG: About to call scan_for_files()...")
-            self.logger.info("DEBUG: Calling scan_for_files with explicit call...")
-            
-            # Test if we can call the method at all
-            self.logger.info("DEBUG: Testing method call...")
-            method = getattr(self.scanner, 'scan_for_files')
-            self.logger.info("DEBUG: Got method: %s", method)
-            
             files_to_process = self.scanner.scan_for_files()
-            
-            if self.config.debug_mode:
-                self.logger.info("DEBUG: Scanner returned %d files", len(files_to_process))
         except Exception as e:
-            self.logger.error("DEBUG: Exception in scanner.scan_for_files(): %s", e, exc_info=True)
+            self.logger.error("Error during file scanning: %s", e, exc_info=True)
             files_to_process = []
         
         if not files_to_process:
@@ -169,16 +134,16 @@ class ZimabladeTranscoder:
             
             # Determine if it's a TV show or movie
             media_type = "TV Show" if file_info.is_tv_show else "Movie"
-            self.logger.info("DEBUG: Processing %s: %s", media_type, file_info.path)
+            self.logger.info("DEBUG MODE: Processing %s: %s", media_type, file_info.path)
             
             try:
                 self._process_single_file(file_info)
-                self.logger.info("DEBUG: Successfully processed %s: %s", media_type, file_info.path)
+                self.logger.info("DEBUG MODE: Successfully processed %s", media_type)
             except Exception as e:
-                self.logger.error("DEBUG: Failed to process %s: %s", file_info.path, e)
+                self.logger.error("DEBUG MODE: Failed to process %s: %s", file_info.path, e)
                 self.file_manager.move_to_failed(file_info.path)
             
-            self.logger.info("DEBUG: Exiting after processing one file")
+            self.logger.info("DEBUG MODE: Exiting after processing one file")
             return
         
         # Normal mode: process all files
