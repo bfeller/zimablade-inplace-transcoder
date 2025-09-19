@@ -91,6 +91,11 @@ class ZimabladeTranscoder:
     
     def _should_process(self) -> bool:
         """Check if we should process files based on time window."""
+        # In debug mode, always process regardless of time
+        if self.config.debug_mode:
+            self.logger.info("DEBUG MODE: Ignoring time window restrictions")
+            return True
+        
         now = datetime.now().time()
         start_time = self.config.start_time
         end_time = self.config.end_time
