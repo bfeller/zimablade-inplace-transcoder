@@ -80,7 +80,7 @@ class Transcoder:
             '-crf', str(self.config.crf_quality),  # Quality setting
             '-c:a', 'aac',  # AAC audio codec
             '-b:a', f'{self.config.audio_bitrate}k',  # Audio bitrate
-            '-c:s', 'copy',  # Copy subtitles as-is (don't convert)
+            '-c:s', 'mov_text',  # Convert subtitles to MP4-compatible format
             '-map', '0',  # Map all streams
             '-y',  # Overwrite output file
             ''  # Output file (will be filled in)
