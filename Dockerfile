@@ -30,7 +30,13 @@ COPY config/ ./config/
 RUN mkdir -p /data/{database,logs,temp/{working,completed,failed}}
 
 # Set permissions
-RUN chmod +x src/main.py
+RUN chmod 755 /data/ && \
+    chmod 755 /data/database/ && \
+    chmod 755 /data/logs/ && \
+    chmod 755 /data/temp/ && \
+    chmod 755 /data/temp/working/ && \
+    chmod 755 /data/temp/completed/ && \
+    chmod 755 /data/temp/failed/
 
 # Create non-root user
 RUN useradd -m -u 1000 transcoder && \
