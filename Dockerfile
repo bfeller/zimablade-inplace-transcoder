@@ -7,7 +7,7 @@ ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 
 # Force rebuild - increment this number to invalidate cache
-ARG BUILD_VERSION=0.6.0-debug
+ARG BUILD_VERSION=0.6.1-debug
 ENV BUILD_VERSION=${BUILD_VERSION}
 ENV FORCE_REBUILD=${BUILD_VERSION}
 
@@ -60,11 +60,6 @@ RUN echo "FORCE_REBUILD: ${FORCE_REBUILD}" >> /tmp/build_info.txt
 RUN echo "CACHE_BUSTING_TIMESTAMP: $(date)" >> /tmp/build_info.txt
 RUN cat /tmp/build_info.txt
 
-# Verify FFmpeg version and Intel Quick Sync support
-RUN ffmpeg -version | head -1
-RUN ffmpeg -encoders | grep -i qsv || echo "No QSV encoders found"
-RUN ffmpeg -hwaccels | grep -i qsv || echo "No QSV hardware acceleration found"
-RUN vainfo || echo "VAAPI not available"
 
 # Clear Python bytecode cache to prevent caching issues
 RUN find ./src -name "*.pyc" -delete && find ./src -name "__pycache__" -type d -exec rm -rf {} + || true
@@ -76,8 +71,8 @@ RUN python3 -Bc "import compileall; compileall.compile_dir('./src', force=True)"
 RUN find ./src -name "*.pyc" -delete && find ./src -name "__pycache__" -type d -exec rm -rf {} + || true
 RUN python3 -c "import py_compile; import os; [py_compile.compile(os.path.join(root, file), doraise=True) for root, dirs, files in os.walk('./src') for file in files if file.endswith('.py')]" || true
 
-# Create non-root user
-RUN useradd -m -u 1000 transcoder
+# Create non-root user (only if it doesn't exist)
+RUN useradd -m -u 1000 transcoder || echo "User transcoder already exists"
 
 # Create data directories with proper ownership
 RUN mkdir -p /data/{database,logs,temp/{working,completed,failed}} && \
