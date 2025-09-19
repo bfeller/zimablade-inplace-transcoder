@@ -50,6 +50,7 @@ class FileScanner:
     
     def scan_for_files(self) -> List[FileInfo]:
         """Scan configured directories for files that need transcoding."""
+        print("🔥🔥🔥 METHOD CALLED - VERSION 2.0 - UNIQUE ID: ABC123 🔥🔥🔥")
         self.logger.info("🔥🔥🔥 SCANNER VERSION 2.0 - INCREMENTAL DEBUG - THIS SHOULD APPEAR 🔥🔥🔥")
         files_to_process = []
         
