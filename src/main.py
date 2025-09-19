@@ -21,7 +21,7 @@ from integrations.radarr import RadarrClient
 from utils.config import Config
 from utils.logging import setup_logging
 
-__version__ = "0.3.6-debug"
+__version__ = "0.3.7-debug"
 
 
 class ZimabladeTranscoder:
@@ -121,6 +121,8 @@ class ZimabladeTranscoder:
         """Main file processing logic."""
         self.logger.info("Starting file processing cycle")
         
+        if self.config.debug_mode:
+            self.logger.info("DEBUG MODE: Starting file scan with detailed progress logging")
         
         # Scan for files that need transcoding
         try:
@@ -134,6 +136,9 @@ class ZimabladeTranscoder:
             return
         
         self.logger.info("Found %d files to process", len(files_to_process))
+        
+        if self.config.debug_mode:
+            self.logger.info("DEBUG MODE: File scan completed - %d files ready for processing", len(files_to_process))
         
         # Debug mode: process only the first file and exit
         if self.config.debug_mode:

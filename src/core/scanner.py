@@ -56,6 +56,7 @@ class FileScanner:
         if self.config.debug_mode:
             self.logger.info("DEBUG: Movies path: %s", self.config.movies_path)
             self.logger.info("DEBUG: TV path: %s", self.config.tv_path)
+            self.logger.info("DEBUG: Starting comprehensive file scan with progress updates")
         
         # Check if directories exist
         movies_exists = self.config.movies_path and os.path.exists(self.config.movies_path)
@@ -68,24 +69,34 @@ class FileScanner:
         # Scan movies directory
         if movies_exists:
             self.logger.info("Scanning movies directory...")
+            if self.config.debug_mode:
+                self.logger.info("DEBUG: Starting movies directory scan")
             try:
                 movie_files = self._scan_directory(self.config.movies_path, is_tv=False)
                 files_to_process.extend(movie_files)
                 self.logger.info("Found %d movie files", len(movie_files))
+                if self.config.debug_mode:
+                    self.logger.info("DEBUG: Movies scan complete - %d files found", len(movie_files))
             except Exception as e:
                 self.logger.error("Error scanning movies directory: %s", e)
         
         # Scan TV shows directory
         if tv_exists:
             self.logger.info("Scanning TV directory...")
+            if self.config.debug_mode:
+                self.logger.info("DEBUG: Starting TV directory scan")
             try:
                 tv_files = self._scan_directory(self.config.tv_path, is_tv=True)
                 files_to_process.extend(tv_files)
                 self.logger.info("Found %d TV files", len(tv_files))
+                if self.config.debug_mode:
+                    self.logger.info("DEBUG: TV scan complete - %d files found", len(tv_files))
             except Exception as e:
                 self.logger.error("Error scanning TV directory: %s", e)
         
         self.logger.info("Found %d files total for processing", len(files_to_process))
+        if self.config.debug_mode:
+            self.logger.info("DEBUG: Complete file scan finished - %d total files ready for processing", len(files_to_process))
         return files_to_process
     
     def _scan_directory(self, directory: str, is_tv: bool) -> List[FileInfo]:
@@ -99,6 +110,7 @@ class FileScanner:
         
         if self.config.debug_mode:
             self.logger.info("DEBUG: Walking directory tree: %s", directory)
+            self.logger.info("DEBUG: Starting file scan with progress updates every 100 files")
         
         file_count = 0
         processed_count = 0
