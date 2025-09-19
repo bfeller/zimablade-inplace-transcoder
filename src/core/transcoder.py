@@ -47,13 +47,14 @@ class Transcoder:
                 
                 # Test device access
                 try:
-                    device_test = subprocess.run(['ffmpeg', '-f', 'lavfi', '-i', 'testsrc=duration=1:size=320x240:rate=1', 
-                                                '-vf', 'scale_qsv=640:480', '-c:v', 'h264_qsv', '-f', 'null', '-'], 
+                    # Simple test: just check if we can initialize QSV without transcoding
+                    device_test = subprocess.run(['ffmpeg', '-hwaccel', 'qsv', '-f', 'lavfi', '-i', 'testsrc=duration=0.1:size=64x64:rate=1', 
+                                                '-c:v', 'h264_qsv', '-f', 'null', '-'], 
                                                capture_output=True, text=True, timeout=10)
                     if device_test.returncode == 0:
                         self.logger.info("Intel Quick Sync device access test successful")
                     else:
-                        self.logger.warning("Intel Quick Sync device access failed: %s", device_test.stderr)
+                        self.logger.warning("Intel Quick Sync device access failed, falling back to software")
                         self._fallback_to_software()
                 except Exception as e:
                     self.logger.warning("Intel Quick Sync device test failed: %s", e)
@@ -120,7 +121,7 @@ class Transcoder:
     def _build_command(self, input_path: str, output_path: str) -> list:
         """Build the FFmpeg command with input and output paths."""
         cmd = self.ffmpeg_cmd.copy()
-        cmd[3] = input_path  # Set input file
+        cmd[4] = input_path  # Set input file (after -i flag)
         cmd[-1] = output_path  # Set output file
         return cmd
     
