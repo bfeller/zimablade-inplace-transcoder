@@ -56,6 +56,9 @@ services:
       - LOG_FILE=/data/logs/transcoder.log
       - LOG_MAX_SIZE=10485760
       - LOG_BACKUP_COUNT=5
+      
+      # Debug mode (set to true for testing)
+      - DEBUG_MODE=false
     
     volumes:
       # Media directories (matching your existing setup)

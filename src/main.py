@@ -114,7 +114,26 @@ class ZimabladeTranscoder:
         
         self.logger.info("Found %d files to process", len(files_to_process))
         
-        # Process each file
+        # Debug mode: process only the first file and exit
+        if self.config.debug_mode:
+            self.logger.info("DEBUG MODE: Processing only the first file and exiting")
+            file_info = files_to_process[0]
+            
+            # Determine if it's a TV show or movie
+            media_type = "TV Show" if file_info.is_tv_show else "Movie"
+            self.logger.info("DEBUG: Processing %s: %s", media_type, file_info.path)
+            
+            try:
+                self._process_single_file(file_info)
+                self.logger.info("DEBUG: Successfully processed %s: %s", media_type, file_info.path)
+            except Exception as e:
+                self.logger.error("DEBUG: Failed to process %s: %s", file_info.path, e)
+                self.file_manager.move_to_failed(file_info.path)
+            
+            self.logger.info("DEBUG: Exiting after processing one file")
+            return
+        
+        # Normal mode: process all files
         for file_info in files_to_process:
             try:
                 self._process_single_file(file_info)

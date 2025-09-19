@@ -70,6 +70,9 @@ class Config:
         self.log_max_size = int(os.getenv('LOG_MAX_SIZE', '10485760'))  # 10MB
         self.log_backup_count = int(os.getenv('LOG_BACKUP_COUNT', '5'))
         
+        # Debug mode
+        self.debug_mode = os.getenv('DEBUG_MODE', 'false').lower() == 'true'
+        
         # Load additional config from YAML files
         self._load_yaml_configs()
         
