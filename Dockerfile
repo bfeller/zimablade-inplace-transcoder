@@ -1,5 +1,5 @@
-# Use Ubuntu base image with Intel Quick Sync support
-FROM ubuntu:22.04
+# Use Ubuntu 24.04 LTS with newer FFmpeg and Intel Quick Sync support
+FROM ubuntu:24.04
 
 # Set environment variables
 ENV DEBIAN_FRONTEND=noninteractive
@@ -7,7 +7,7 @@ ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 
 # Force rebuild - increment this number to invalidate cache
-ARG BUILD_VERSION=0.3.8-debug
+ARG BUILD_VERSION=0.4.0-debug
 ENV BUILD_VERSION=${BUILD_VERSION}
 ENV FORCE_REBUILD=${BUILD_VERSION}
 
@@ -18,10 +18,15 @@ RUN apt-get update && apt-get install -y \
     ffmpeg \
     curl \
     gosu \
+    software-properties-common \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Intel media driver separately (may not be available in all repos)
-RUN apt-get update && apt-get install -y intel-media-va-driver || echo "Intel media driver not available, skipping"
+# Install Intel media driver and newer FFmpeg with better QSV support
+RUN apt-get update && apt-get install -y \
+    intel-media-va-driver-non-free \
+    libmfx1 \
+    libmfx-tools \
+    && rm -rf /var/lib/apt/lists/* || echo "Intel media driver not available, skipping"
 
 # Create application directory
 WORKDIR /app
@@ -41,10 +46,10 @@ RUN echo "FORCE_REBUILD: ${FORCE_REBUILD}" >> /tmp/build_info.txt
 RUN echo "CACHE_BUSTING_TIMESTAMP: $(date)" >> /tmp/build_info.txt
 RUN cat /tmp/build_info.txt
 
-# Nuclear option: Force Python module reload
-RUN find ./src -name "*.pyc" -delete && find ./src -name "__pycache__" -type d -exec rm -rf {} + || true
-RUN python3 -c "import sys; print('Python version:', sys.version)"
-RUN python3 -c "import os; print('Current working directory:', os.getcwd())"
+# Verify FFmpeg version and Intel Quick Sync support
+RUN ffmpeg -version | head -1
+RUN ffmpeg -encoders | grep -i qsv || echo "No QSV encoders found"
+RUN ffmpeg -hwaccels | grep -i qsv || echo "No QSV hardware acceleration found"
 
 # Clear Python bytecode cache to prevent caching issues
 RUN find ./src -name "*.pyc" -delete && find ./src -name "__pycache__" -type d -exec rm -rf {} + || true
