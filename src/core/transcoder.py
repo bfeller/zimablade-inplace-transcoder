@@ -33,8 +33,7 @@ class Transcoder:
             '-b:a', f'{self.config.audio_bitrate}k',  # Audio bitrate
             '-c:s', 'copy',  # Copy subtitles as-is (don't convert)
             '-map', '0:v:0',  # Map video stream
-            '-map', '0:a:m:language:eng?',  # Map English audio if available
-            '-map', '0:a:0',  # Fallback to first audio if no English
+            '-map', '0:a:m:language:eng?',  # Map English audio if available, fallback to first audio
             '-map', '0:s',  # Map all subtitle streams
             '-y',  # Overwrite output file
             ''  # Output file (will be filled in)
@@ -85,8 +84,7 @@ class Transcoder:
             '-b:a', f'{self.config.audio_bitrate}k',  # Audio bitrate
             '-c:s', 'mov_text',  # Convert subtitles to MP4-compatible format
             '-map', '0:v:0',  # Map video stream
-            '-map', '0:a:m:language:eng?',  # Map English audio if available
-            '-map', '0:a:0',  # Fallback to first audio if no English
+            '-map', '0:a:m:language:eng?',  # Map English audio if available, fallback to first audio
             '-map', '0:s',  # Map all subtitle streams
             '-y',  # Overwrite output file
             ''  # Output file (will be filled in)
@@ -94,6 +92,7 @@ class Transcoder:
     
     def transcode(self, input_path: str, output_path: str, original_path: str = None) -> bool:
         """Transcode a video file from input to output with automatic fallback."""
+        self.logger.info("=== TRANSCODE METHOD STARTED ===")
         self.logger.info("Transcoder.transcode() called with input_path=%s, output_path=%s, original_path=%s", 
                         input_path, output_path, original_path)
         
