@@ -33,6 +33,7 @@ class FileScanner:
     
     def scan_for_files(self) -> List[FileInfo]:
         """Scan configured directories for files that need transcoding."""
+        self.logger.info("DEBUG: scan_for_files() method called")
         files_to_process = []
         
         if self.config.debug_mode:
