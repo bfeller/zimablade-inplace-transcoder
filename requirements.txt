@@ -4,6 +4,6 @@
 requests>=2.31.0
 PyYAML>=6.0
 
-# Optional dependencies for enhanced functionality
-# psutil>=5.9.0  # System monitoring
-# schedule>=1.2.0  # Advanced scheduling
+# Ensure compatibility with Ubuntu 24.04
+setuptools>=65.0.0
+wheel>=0.40.0

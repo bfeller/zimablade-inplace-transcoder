@@ -5,7 +5,7 @@ services:
     build:
       context: .
       args:
-        BUILD_VERSION: 0.4.0-debug
+        BUILD_VERSION: 0.4.1-debug
     container_name: zimablade-transcoder
     restart: unless-stopped
     
@@ -68,7 +68,7 @@ services:
       - DEBUG_MODE=true
       
       # Database management
-      - CLEAR_DATABASE_ON_START=false
+      - CLEAR_DATABASE_ON_START=
     
     volumes:
       # Media directories (matching your existing setup)

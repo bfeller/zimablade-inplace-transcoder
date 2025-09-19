@@ -7,7 +7,7 @@ ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 
 # Force rebuild - increment this number to invalidate cache
-ARG BUILD_VERSION=0.4.0-debug
+ARG BUILD_VERSION=0.4.1-debug
 ENV BUILD_VERSION=${BUILD_VERSION}
 ENV FORCE_REBUILD=${BUILD_VERSION}
 
@@ -15,10 +15,13 @@ ENV FORCE_REBUILD=${BUILD_VERSION}
 RUN apt-get update && apt-get install -y \
     python3 \
     python3-pip \
+    python3-venv \
+    python3-dev \
     ffmpeg \
     curl \
     gosu \
     software-properties-common \
+    build-essential \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Intel media driver and newer FFmpeg with better QSV support
@@ -33,7 +36,9 @@ WORKDIR /app
 
 # Copy requirements and install Python dependencies
 COPY requirements.txt .
-RUN pip3 install --no-cache-dir -r requirements.txt
+RUN python3 -m pip install --upgrade pip
+RUN python3 -m pip install --no-cache-dir -r requirements.txt
+RUN python3 -c "import requests, yaml; print('Dependencies installed successfully')"
 
 # Copy application code
 COPY src/ ./src/
