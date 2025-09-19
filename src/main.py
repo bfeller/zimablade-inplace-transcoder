@@ -36,6 +36,31 @@ class ZimabladeTranscoder:
         self.sonarr = SonarrClient(self.config) if self.config.sonarr_enabled else None
         self.radarr = RadarrClient(self.config) if self.config.radarr_enabled else None
         
+        # Test connections to media servers
+        self._test_media_server_connections()
+    
+    def _test_media_server_connections(self):
+        """Test connections to Sonarr/Radarr and disable if not available."""
+        if self.sonarr:
+            if not self.sonarr.test_connection():
+                self.logger.error("Sonarr connection failed - disabling transcoding")
+                self.sonarr = None
+            else:
+                self.logger.info("Sonarr connection successful")
+        
+        if self.radarr:
+            if not self.radarr.test_connection():
+                self.logger.error("Radarr connection failed - disabling transcoding")
+                self.radarr = None
+            else:
+                self.logger.info("Radarr connection successful")
+        
+        # Check if any media server is available
+        if not self.sonarr and not self.radarr:
+            self.logger.error("No media servers available - transcoding disabled")
+            self.logger.error("Please check Sonarr/Radarr connections and API keys")
+            raise RuntimeError("No media servers available - cannot proceed with transcoding")
+        
     def run(self):
         """Main application loop."""
         self.logger.info("Starting Zimablade Transcoder v%s", __version__)
@@ -148,11 +173,16 @@ class ZimabladeTranscoder:
         """Update Sonarr/Radarr with new filename."""
         try:
             if self.sonarr and file_info.is_tv_show:
-                self.sonarr.update_file_path(file_info.path, output_filename)
+                success = self.sonarr.update_file_path(file_info.path, output_filename)
+                if not success:
+                    raise Exception("Sonarr API update failed")
             elif self.radarr and file_info.is_movie:
-                self.radarr.update_file_path(file_info.path, output_filename)
+                success = self.radarr.update_file_path(file_info.path, output_filename)
+                if not success:
+                    raise Exception("Radarr API update failed")
         except Exception as e:
-            self.logger.warning("Failed to update media server: %s", e)
+            self.logger.error("Failed to update media server: %s", e)
+            raise  # Re-raise to stop processing
     
     def _cleanup(self):
         """Cleanup resources on shutdown."""
