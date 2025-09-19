@@ -48,7 +48,24 @@ class FileScanner:
     def scan_for_files(self) -> List[FileInfo]:
         """Scan configured directories for files that need transcoding."""
         self.logger.info("DEBUG: scan_for_files() method called - WORKING VERSION")
-        # Temporarily use simplified version that we know works
+        files_to_process = []
+        
+        if self.config.debug_mode:
+            self.logger.info("DEBUG: Starting file scan...")
+            self.logger.info("DEBUG: Movies path: %s", self.config.movies_path)
+            self.logger.info("DEBUG: TV path: %s", self.config.tv_path)
+        
+        self.logger.info("DEBUG: About to check directory existence...")
+        
+        # Check if directories exist
+        movies_exists = self.config.movies_path and os.path.exists(self.config.movies_path)
+        tv_exists = self.config.tv_path and os.path.exists(self.config.tv_path)
+        
+        if self.config.debug_mode:
+            self.logger.info("DEBUG: Movies exists: %s", movies_exists)
+            self.logger.info("DEBUG: TV exists: %s", tv_exists)
+        
+        self.logger.info("DEBUG: Returning empty list for now")
         return []
     
     def _scan_directory(self, directory: str, is_tv: bool) -> List[FileInfo]:
