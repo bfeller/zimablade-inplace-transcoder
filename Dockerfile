@@ -1,5 +1,5 @@
-# Use LinuxServer FFmpeg image as base (has Intel Quick Sync pre-configured)
-FROM lscr.io/linuxserver/ffmpeg:latest
+# Use Ubuntu 22.04 LTS (more stable and smaller than 24.04)
+FROM ubuntu:22.04
 
 # Set environment variables
 ENV DEBIAN_FRONTEND=noninteractive
@@ -7,20 +7,30 @@ ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 
 # Force rebuild - increment this number to invalidate cache
-ARG BUILD_VERSION=0.4.8-debug
+ARG BUILD_VERSION=0.4.9-debug
 ENV BUILD_VERSION=${BUILD_VERSION}
 ENV FORCE_REBUILD=${BUILD_VERSION}
 
-# Install Python and basic tools (LinuxServer image already has FFmpeg with QSV)
+# Install minimal packages first
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 \
     python3-pip \
-    python3-venv \
-    python3-dev \
     curl \
     sudo \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
+
+# Install FFmpeg from Ubuntu repositories (smaller than PPA version)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ffmpeg \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Intel media driver (minimal)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    intel-media-va-driver \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* || echo "Intel driver not available"
 
 # Create application directory
 WORKDIR /app
@@ -30,12 +40,6 @@ COPY requirements.txt .
 RUN python3 -m pip install --upgrade pip
 RUN python3 -m pip install --no-cache-dir -r requirements.txt
 RUN python3 -c "import requests, yaml; print('Dependencies installed successfully')"
-
-# Verify FFmpeg version and Intel Quick Sync support
-RUN ffmpeg -version | head -1
-RUN ffmpeg -encoders | grep -i qsv || echo "No QSV encoders found"
-RUN ffmpeg -hwaccels | grep -i qsv || echo "No QSV hardware acceleration found"
-RUN vainfo || echo "VAAPI not available"
 
 # Copy application code
 COPY src/ ./src/
