@@ -68,7 +68,7 @@ services:
       - DEBUG_MODE=true
       
       # Database management
-      - CLEAR_DATABASE_ON_START=false
+      - CLEAR_DATABASE_ON_START=true
     
     volumes:
       # Media directories (matching your existing setup)
