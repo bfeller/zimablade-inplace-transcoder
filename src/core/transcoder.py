@@ -92,7 +92,8 @@ class Transcoder:
     
     def transcode(self, input_path: str, output_path: str, original_path: str = None) -> bool:
         """Transcode a video file from input to output with automatic fallback."""
-        self.logger.info("🚀🚀🚀 NEW CODE DEPLOYED - TRANSCODE METHOD STARTED 🚀🚀🚀")
+        self.logger.info("🚀🚀🚀 VERSION 0.3.0 DEPLOYED - TRANSCODE METHOD STARTED 🚀🚀🚀")
+        self.logger.info("🔥🔥🔥 THIS IS DEFINITELY THE NEW CODE 🔥🔥🔥")
         self.logger.info("Transcoder.transcode() called with input_path=%s, output_path=%s, original_path=%s", 
                         input_path, output_path, original_path)
         
