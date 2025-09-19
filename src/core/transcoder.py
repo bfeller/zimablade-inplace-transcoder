@@ -24,18 +24,17 @@ class Transcoder:
         self.logger.warning("Intel Quick Sync is not working properly - forcing software encoding for all files")
         self._fallback_to_software()
         
-        # FFmpeg command template - use hybrid approach for better compatibility
+        # FFmpeg command template - software encoding with subtitle handling
         self.ffmpeg_cmd = [
             'ffmpeg',
-            '-hwaccel', 'qsv',  # Intel Quick Sync hardware acceleration
             '-i', '',  # Input file (will be filled in)
-            '-vf', 'scale=1920:1080',  # Scale to 1080p using software (more compatible)
-            '-c:v', 'h264_qsv',  # H.264 encoder using QSV
+            '-vf', 'scale=1920:1080',  # Scale to 1080p using software
+            '-c:v', 'libx264',  # Software H.264 encoder
             '-preset', 'medium',  # Encoding preset
             '-crf', str(self.config.crf_quality),  # Quality setting
             '-c:a', 'aac',  # AAC audio codec
             '-b:a', f'{self.config.audio_bitrate}k',  # Audio bitrate
-            '-c:s', 'mov_text',  # Subtitle codec for MP4
+            '-c:s', 'copy',  # Copy subtitles as-is (don't convert)
             '-map', '0',  # Map all streams
             '-y',  # Overwrite output file
             ''  # Output file (will be filled in)
@@ -84,7 +83,7 @@ class Transcoder:
             '-crf', str(self.config.crf_quality),  # Quality setting
             '-c:a', 'aac',  # AAC audio codec
             '-b:a', f'{self.config.audio_bitrate}k',  # Audio bitrate
-            '-c:s', 'mov_text',  # Subtitle codec for MP4
+            '-c:s', 'copy',  # Copy subtitles as-is (don't convert)
             '-map', '0',  # Map all streams
             '-y',  # Overwrite output file
             ''  # Output file (will be filled in)
