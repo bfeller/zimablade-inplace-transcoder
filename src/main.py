@@ -12,14 +12,14 @@ from pathlib import Path
 # Add src to path for imports
 sys.path.append(str(Path(__file__).parent))
 
-from .core.scanner import FileScanner
-from .core.transcoder import Transcoder
-from .core.file_manager import FileManager
-from .core.database import Database
-from .integrations.sonarr import SonarrClient
-from .integrations.radarr import RadarrClient
-from .utils.config import Config
-from .utils.logging import setup_logging
+from core.scanner import FileScanner
+from core.transcoder import Transcoder
+from core.file_manager import FileManager
+from core.database import Database
+from integrations.sonarr import SonarrClient
+from integrations.radarr import RadarrClient
+from utils.config import Config
+from utils.logging import setup_logging
 
 
 class ZimabladeTranscoder:

@@ -5,7 +5,7 @@ Radarr API integration for updating movie file paths.
 import requests
 import logging
 from typing import Optional, Dict, Any
-from ..utils.config import Config
+from utils.config import Config
 
 
 class RadarrClient:

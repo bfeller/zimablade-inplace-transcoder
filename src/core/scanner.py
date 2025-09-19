@@ -8,8 +8,8 @@ from pathlib import Path
 from typing import List, Optional
 from datetime import datetime, timedelta
 
-from ..models.file_info import FileInfo
-from ..utils.helpers import get_video_info
+from models.file_info import FileInfo
+from utils.helpers import get_video_info
 
 
 class FileScanner:
