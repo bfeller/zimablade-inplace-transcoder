@@ -104,6 +104,7 @@ class Transcoder:
                         input_path, output_path, original_path)
         
         try:
+            print("🔥🔥🔥 STARTING TRANSCODING PROCESS 🔥🔥🔥")
             self.logger.info("Starting transcoding: %s -> %s", input_path, output_path)
             
             # Validate input file
@@ -116,26 +117,32 @@ class Transcoder:
             output_dir.mkdir(parents=True, exist_ok=True)
             
             # Try Intel Quick Sync first
+            print("🚀🚀🚀 ATTEMPTING INTEL QUICK SYNC 🚀🚀🚀")
             self.logger.info("Attempting Intel Quick Sync transcoding...")
             self.logger.info("Intel Quick Sync attempt starting...")
             success = self._transcode_with_current_settings(input_path, output_path)
             
             if success:
+                print("✅✅✅ INTEL QUICK SYNC SUCCESS ✅✅✅")
                 self.logger.info("Intel Quick Sync transcoding successful!")
                 return True
             
             # Intel Quick Sync failed, try software encoding
+            print("⚠️⚠️⚠️ INTEL QUICK SYNC FAILED - FALLING BACK TO SOFTWARE ⚠️⚠️⚠️")
             self.logger.warning("Intel Quick Sync failed, falling back to software encoding...")
             self.logger.info("Switching to software encoding configuration...")
             self._fallback_to_software()
             self.logger.info("Software encoding configuration applied, starting transcoding...")
             self.logger.info("Software encoding attempt starting...")
+            print("🔥🔥🔥 STARTING SOFTWARE ENCODING ATTEMPT 🔥🔥🔥")
             success = self._transcode_with_current_settings(input_path, output_path)
             
             if success:
+                print("✅✅✅ SOFTWARE ENCODING SUCCESS ✅✅✅")
                 self.logger.info("Software encoding transcoding successful!")
                 return True
             else:
+                print("❌❌❌ BOTH ENCODING METHODS FAILED ❌❌❌")
                 self.logger.error("Both Intel Quick Sync and software encoding failed")
                 return False
                        
