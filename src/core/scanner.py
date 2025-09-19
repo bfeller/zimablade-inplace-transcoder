@@ -35,6 +35,11 @@ class FileScanner:
         
         self.logger.info("DEBUG: FileScanner.__init__() completed")
     
+    def test_method(self) -> str:
+        """Simple test method to verify scanner is working."""
+        self.logger.info("DEBUG: test_method() called successfully")
+        return "test_method_working"
+    
     def scan_for_files(self) -> List[FileInfo]:
         """Scan configured directories for files that need transcoding."""
         self.logger.info("DEBUG: scan_for_files() method called")

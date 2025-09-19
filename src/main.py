@@ -129,7 +129,13 @@ class ZimabladeTranscoder:
                 self.logger.info("DEBUG: Scanner has scan_for_files method: %s", hasattr(self.scanner, 'scan_for_files'))
                 self.logger.info("DEBUG: Scanner config: %s", self.scanner.config)
                 self.logger.info("DEBUG: Scanner db: %s", type(self.scanner.db))
+                
+                # Test simple method first
+                self.logger.info("DEBUG: Testing simple scanner method...")
+                test_result = self.scanner.test_method()
+                self.logger.info("DEBUG: Test method result: %s", test_result)
             
+            self.logger.info("DEBUG: About to call scan_for_files()...")
             files_to_process = self.scanner.scan_for_files()
             
             if self.config.debug_mode:
