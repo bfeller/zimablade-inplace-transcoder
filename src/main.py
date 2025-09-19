@@ -21,6 +21,8 @@ from integrations.radarr import RadarrClient
 from utils.config import Config
 from utils.logging import setup_logging
 
+__version__ = "0.1.0"
+
 
 class ZimabladeTranscoder:
     """Main transcoder application class."""

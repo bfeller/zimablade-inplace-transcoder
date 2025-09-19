@@ -25,6 +25,7 @@ RUN pip3 install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY src/ ./src/
 COPY config/ ./config/
+COPY entrypoint.sh ./entrypoint.sh
 
 # Create non-root user first
 RUN useradd -m -u 1000 transcoder
@@ -34,11 +35,11 @@ RUN mkdir -p /data/{database,logs,temp/{working,completed,failed}} && \
     chown -R transcoder:transcoder /data && \
     chmod -R 755 /data
 
+# Make entrypoint script executable
+RUN chmod +x ./entrypoint.sh
+
 # Switch to transcoder user
 USER transcoder
-
-# Ensure data directories exist and are writable (in case volume mount overrides)
-RUN mkdir -p /data/{database,logs,temp/{working,completed,failed}}
 
 # Expose any ports if needed (none for this application)
 # EXPOSE 8080
@@ -46,6 +47,9 @@ RUN mkdir -p /data/{database,logs,temp/{working,completed,failed}}
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD python3 -c "import sys; sys.exit(0)"
+
+# Set entrypoint
+ENTRYPOINT ["./entrypoint.sh"]
 
 # Default command
 CMD ["python3", "src/main.py"]
