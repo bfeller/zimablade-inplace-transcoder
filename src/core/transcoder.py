@@ -20,6 +20,10 @@ class Transcoder:
         # Test Intel Quick Sync availability
         self._test_intel_quicksync()
         
+        # Force software encoding since Intel Quick Sync is not working
+        self.logger.warning("Intel Quick Sync is not working properly - forcing software encoding for all files")
+        self._fallback_to_software()
+        
         # FFmpeg command template - use hybrid approach for better compatibility
         self.ffmpeg_cmd = [
             'ffmpeg',
@@ -185,6 +189,8 @@ class Transcoder:
                 return False
             else:
                 self.logger.warning("Could not analyze file for HDR content: %s", result.stderr)
+                self.logger.warning("ffprobe return code: %d", result.returncode)
+                self.logger.warning("ffprobe stdout: %s", result.stdout)
                 return False
                 
         except Exception as e:
