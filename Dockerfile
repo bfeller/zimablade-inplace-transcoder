@@ -7,7 +7,7 @@ ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 
 # Force rebuild - increment this number to invalidate cache
-ARG BUILD_VERSION=0.3.1-debug
+ARG BUILD_VERSION=0.3.3-debug
 ENV BUILD_VERSION=${BUILD_VERSION}
 
 # Install system dependencies
@@ -39,6 +39,10 @@ RUN find ./src -name "*.pyc" -delete && find ./src -name "__pycache__" -type d -
 
 # Additional cache clearing before runtime
 RUN python3 -Bc "import compileall; compileall.compile_dir('./src', force=True)" || true
+
+# Nuclear option: Remove all Python cache and force recompilation
+RUN find ./src -name "*.pyc" -delete && find ./src -name "__pycache__" -type d -exec rm -rf {} + || true
+RUN python3 -c "import py_compile; import os; [py_compile.compile(os.path.join(root, file), doraise=True) for root, dirs, files in os.walk('./src') for file in files if file.endswith('.py')]" || true
 
 # Create non-root user
 RUN useradd -m -u 1000 transcoder
