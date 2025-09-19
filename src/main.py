@@ -134,8 +134,14 @@ class ZimabladeTranscoder:
                 self.logger.info("DEBUG: Testing simple scanner method...")
                 test_result = self.scanner.test_method()
                 self.logger.info("DEBUG: Test method result: %s", test_result)
+                
+                # Test simplified scan method
+                self.logger.info("DEBUG: Testing simplified scan method...")
+                simple_result = self.scanner.scan_for_files_simple()
+                self.logger.info("DEBUG: Simple scan result: %d files", len(simple_result))
             
             self.logger.info("DEBUG: About to call scan_for_files()...")
+            self.logger.info("DEBUG: Calling scan_for_files with explicit call...")
             files_to_process = self.scanner.scan_for_files()
             
             if self.config.debug_mode:
