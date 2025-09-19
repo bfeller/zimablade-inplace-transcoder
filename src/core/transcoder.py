@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Optional
 
 # Debug: Confirm this module is being loaded
-print("🚀🚀🚀 TRANSCODER MODULE LOADED - VERSION 0.5.8 🚀🚀🚀")
+print("🚀🚀🚀 TRANSCODER MODULE LOADED - VERSION 0.6.0 🚀🚀🚀")
 
 
 class Transcoder:
@@ -100,9 +100,9 @@ class Transcoder:
     
     def transcode(self, input_path: str, output_path: str, original_path: str = None) -> bool:
         """Transcode a video file from input to output with automatic fallback."""
-        print("🚀🚀🚀 TRANSCODE METHOD CALLED - VERSION 0.5.8 🚀🚀🚀")
+        print("🚀🚀🚀 TRANSCODE METHOD CALLED - VERSION 0.6.0 🚀🚀🚀")
         print("🔥🔥🔥 TESTING LOGGER - THIS SHOULD APPEAR 🔥🔥🔥")
-        self.logger.info("🚀🚀🚀 VERSION 0.5.8 DEPLOYED - TRANSCODE METHOD STARTED 🚀🚀🚀")
+        self.logger.info("🚀🚀🚀 VERSION 0.6.0 DEPLOYED - TRANSCODE METHOD STARTED 🚀🚀🚀")
         self.logger.info("🔥🔥🔥 CACHE BUSTING - THIS WILL DEFINITELY WORK 🔥🔥🔥")
         self.logger.error("🚨🚨🚨 ERROR LEVEL TEST - THIS SHOULD DEFINITELY APPEAR 🚨🚨🚨")
         self.logger.info("Transcoder.transcode() called with input_path=%s, output_path=%s, original_path=%s", 
@@ -274,6 +274,8 @@ class Transcoder:
             # Monitor progress with timeout
             self._monitor_progress(process)
             
+            self.logger.info("Progress monitoring finished, checking process status...")
+            
             self.logger.info("FFmpeg process completed, waiting for final return code...")
             # Wait for completion with timeout (30 minutes max)
             try:
@@ -323,6 +325,8 @@ class Transcoder:
             last_progress_time = 0
             stderr_lines = []
             
+            self.logger.info("Progress monitoring started - looking for FFmpeg output...")
+            
             while True:
                 line = process.stderr.readline()
                 if not line:
@@ -330,6 +334,9 @@ class Transcoder:
                 
                 # Store all stderr lines for error reporting
                 stderr_lines.append(line.strip())
+                
+                # Log every line for debugging
+                self.logger.debug("FFmpeg stderr: %s", line.strip())
                 
                 # Parse progress information
                 if 'frame=' in line and 'fps=' in line:
@@ -347,7 +354,7 @@ class Transcoder:
                         current_time = time.time()
                         if current_time - last_progress_time >= 10:
                             self.logger.info("Transcoding Progress: %s %s %s %s %s", 
-                                            frame_info, fps_info, time_info, speed_info, bitrate_info)
+                                           frame_info, fps_info, time_info, speed_info, bitrate_info)
                             last_progress_time = current_time
                         else:
                             self.logger.debug("Progress: %s %s %s %s %s", 
@@ -359,6 +366,7 @@ class Transcoder:
             
             # Store stderr lines for later retrieval
             process._stderr_lines = stderr_lines
+            self.logger.info("Progress monitoring completed - captured %d stderr lines", len(stderr_lines))
                         
         except Exception as e:
             self.logger.warning("Error monitoring progress: %s", e)
