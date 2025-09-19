@@ -187,6 +187,34 @@ class FileScanner:
     def _analyze_file(self, file_path: Path, is_tv: bool) -> Optional[FileInfo]:
         """Analyze a file and return FileInfo if it's a valid video file."""
         try:
+            # Get file stats for cache validation
+            file_stats = file_path.stat()
+            file_size = file_stats.st_size
+            file_mtime = file_stats.st_mtime
+            
+            # Check if we have cached analysis
+            cached_analysis = self.db.get_cached_analysis(str(file_path), file_size, file_mtime)
+            if cached_analysis:
+                if self.config.debug_mode:
+                    self.logger.info("DEBUG: Using cached analysis for: %s", file_path.name)
+                
+                # Create FileInfo from cached data
+                file_info = FileInfo(
+                    path=file_path,
+                    filename=file_path.name,
+                    size_bytes=file_size,
+                    duration_seconds=cached_analysis.get('duration_seconds', 0),
+                    width=cached_analysis.get('width', 0),
+                    height=cached_analysis.get('height', 0),
+                    codec=cached_analysis.get('codec', 'unknown'),
+                    bitrate=cached_analysis.get('bitrate', 0),
+                    is_tv_show=is_tv,
+                    is_movie=not is_tv
+                )
+                
+                return file_info
+            
+            # No cache, run ffprobe
             if self.config.debug_mode:
                 self.logger.info("DEBUG: Running ffprobe on: %s", file_path.name)
             
@@ -207,7 +235,7 @@ class FileScanner:
             file_info = FileInfo(
                 path=file_path,
                 filename=file_path.name,
-                size_bytes=file_path.stat().st_size,
+                size_bytes=file_size,
                 duration_seconds=video_info.get('duration', 0),
                 width=video_info.get('width', 0),
                 height=video_info.get('height', 0),
@@ -216,6 +244,10 @@ class FileScanner:
                 is_tv_show=is_tv,
                 is_movie=not is_tv
             )
+            
+            # Cache the analysis result
+            needs_transcoding = self._needs_transcoding(file_info)
+            self.db.cache_analysis(str(file_path), file_size, file_mtime, video_info, needs_transcoding)
             
             return file_info
             

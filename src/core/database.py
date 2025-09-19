@@ -41,6 +41,23 @@ class Database:
         """Create database tables."""
         cursor = self.connection.cursor()
         
+        # File analysis cache table
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS file_analysis_cache (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                file_path TEXT UNIQUE NOT NULL,
+                file_size INTEGER NOT NULL,
+                file_mtime REAL NOT NULL,
+                duration_seconds REAL,
+                width INTEGER,
+                height INTEGER,
+                codec TEXT,
+                bitrate INTEGER,
+                needs_transcoding BOOLEAN NOT NULL,
+                analyzed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        
         # Processed files table
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS processed_files (
@@ -80,9 +97,57 @@ class Database:
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_original_path ON processed_files(original_path)')
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_processed_at ON processed_files(processed_at)')
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_date ON processing_stats(date)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_file_path ON file_analysis_cache(file_path)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_analyzed_at ON file_analysis_cache(analyzed_at)')
         
         self.connection.commit()
         self.logger.debug("Database tables created successfully")
+    
+    def get_cached_analysis(self, file_path: str, file_size: int, file_mtime: float) -> Optional[dict]:
+        """Get cached file analysis if file hasn't changed."""
+        try:
+            cursor = self.connection.cursor()
+            cursor.execute('''
+                SELECT * FROM file_analysis_cache 
+                WHERE file_path = ? AND file_size = ? AND file_mtime = ?
+            ''', (str(file_path), file_size, file_mtime))
+            
+            row = cursor.fetchone()
+            if row:
+                return dict(row)
+            return None
+            
+        except Exception as e:
+            self.logger.error("Error getting cached analysis: %s", e)
+            return None
+    
+    def cache_analysis(self, file_path: str, file_size: int, file_mtime: float, 
+                      analysis_result: dict, needs_transcoding: bool):
+        """Cache file analysis results."""
+        try:
+            cursor = self.connection.cursor()
+            cursor.execute('''
+                INSERT OR REPLACE INTO file_analysis_cache 
+                (file_path, file_size, file_mtime, duration_seconds, width, height, 
+                 codec, bitrate, needs_transcoding)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (
+                str(file_path),
+                file_size,
+                file_mtime,
+                analysis_result.get('duration', 0),
+                analysis_result.get('width', 0),
+                analysis_result.get('height', 0),
+                analysis_result.get('codec', 'unknown'),
+                analysis_result.get('bitrate', 0),
+                needs_transcoding
+            ))
+            
+            self.connection.commit()
+            self.logger.debug("Cached analysis for: %s", file_path)
+            
+        except Exception as e:
+            self.logger.error("Error caching analysis: %s", e)
     
     def is_file_processed(self, file_path: str) -> bool:
         """Check if a file has already been processed."""
