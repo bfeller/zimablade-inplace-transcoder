@@ -69,11 +69,19 @@ class ZimabladeTranscoder:
         
         try:
             # Initialize database
+            if self.config.debug_mode:
+                self.logger.info("DEBUG: About to initialize database")
             self.db.initialize()
+            if self.config.debug_mode:
+                self.logger.info("DEBUG: Database initialized successfully")
             
             # Main processing loop
             while True:
+                if self.config.debug_mode:
+                    self.logger.info("DEBUG: Checking if should process...")
                 if self._should_process():
+                    if self.config.debug_mode:
+                        self.logger.info("DEBUG: Should process - calling _process_files()")
                     self._process_files()
                 else:
                     self.logger.info("Outside processing window, sleeping...")
@@ -110,8 +118,14 @@ class ZimabladeTranscoder:
         """Main file processing logic."""
         self.logger.info("Starting file processing cycle")
         
+        if self.config.debug_mode:
+            self.logger.info("DEBUG: About to call scanner.scan_for_files()")
+        
         # Scan for files that need transcoding
         files_to_process = self.scanner.scan_for_files()
+        
+        if self.config.debug_mode:
+            self.logger.info("DEBUG: Scanner returned %d files", len(files_to_process))
         
         if not files_to_process:
             self.logger.info("No files found for processing")
