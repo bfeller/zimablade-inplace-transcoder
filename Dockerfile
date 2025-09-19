@@ -7,8 +7,9 @@ ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 
 # Force rebuild - increment this number to invalidate cache
-ARG BUILD_VERSION=0.3.3-debug
+ARG BUILD_VERSION=0.3.4-debug
 ENV BUILD_VERSION=${BUILD_VERSION}
+ENV FORCE_REBUILD=${BUILD_VERSION}
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -33,6 +34,11 @@ RUN pip3 install --no-cache-dir -r requirements.txt
 COPY src/ ./src/
 COPY config/ ./config/
 COPY entrypoint.sh ./entrypoint.sh
+
+# Cache busting - this will force rebuild if any file changes
+RUN echo "BUILD_VERSION: ${BUILD_VERSION}" > /tmp/build_info.txt
+RUN echo "FORCE_REBUILD: ${FORCE_REBUILD}" >> /tmp/build_info.txt
+RUN cat /tmp/build_info.txt
 
 # Clear Python bytecode cache to prevent caching issues
 RUN find ./src -name "*.pyc" -delete && find ./src -name "__pycache__" -type d -exec rm -rf {} + || true
