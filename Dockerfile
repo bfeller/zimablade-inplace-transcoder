@@ -1,4 +1,4 @@
-# Use Ubuntu 22.04 LTS with newer FFmpeg from PPA
+# Use Ubuntu 22.04 LTS with newer FFmpeg from PPA (more stable)
 FROM ubuntu:22.04
 
 # Set environment variables
@@ -7,25 +7,31 @@ ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 
 # Force rebuild - increment this number to invalidate cache
-ARG BUILD_VERSION=0.4.2-debug
+ARG BUILD_VERSION=0.4.3-debug
 ENV BUILD_VERSION=${BUILD_VERSION}
 ENV FORCE_REBUILD=${BUILD_VERSION}
 
-# Install system dependencies with better error handling
+# Install basic system dependencies first
 RUN apt-get update && apt-get install -y \
     python3 \
     python3-pip \
-    python3-venv \
-    python3-dev \
     curl \
     gosu \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* \
+    && echo "Basic dependencies installed successfully"
+
+# Install additional packages separately
+RUN apt-get update && apt-get install -y \
+    python3-venv \
+    python3-dev \
     software-properties-common \
     build-essential \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
-    && echo "System dependencies installed successfully"
+    && echo "Additional dependencies installed successfully"
 
-# Install FFmpeg with QSV support from PPA
+# Install FFmpeg with QSV support from PPA (Ubuntu 22.04 compatible)
 RUN add-apt-repository ppa:savoury1/ffmpeg4 -y && \
     apt-get update && \
     apt-get install -y ffmpeg && \
@@ -33,9 +39,9 @@ RUN add-apt-repository ppa:savoury1/ffmpeg4 -y && \
     rm -rf /var/lib/apt/lists/* && \
     echo "FFmpeg with QSV support installed successfully"
 
-# Install Intel media driver and VAAPI utilities
+# Install Intel media driver and VAAPI utilities (Ubuntu 22.04 compatible)
 RUN apt-get update && apt-get install -y \
-    intel-media-va-driver-non-free \
+    intel-media-va-driver \
     vainfo \
     libmfx1 \
     libmfx-tools \
