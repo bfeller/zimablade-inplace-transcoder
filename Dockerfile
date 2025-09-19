@@ -7,7 +7,7 @@ ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 
 # Force rebuild - increment this number to invalidate cache
-ARG BUILD_VERSION=0.3.4-debug
+ARG BUILD_VERSION=0.3.8-debug
 ENV BUILD_VERSION=${BUILD_VERSION}
 ENV FORCE_REBUILD=${BUILD_VERSION}
 
@@ -35,10 +35,16 @@ COPY src/ ./src/
 COPY config/ ./config/
 COPY entrypoint.sh ./entrypoint.sh
 
-# Cache busting - this will force rebuild if any file changes
+# AGGRESSIVE CACHE BUSTING - Force complete rebuild
 RUN echo "BUILD_VERSION: ${BUILD_VERSION}" > /tmp/build_info.txt
 RUN echo "FORCE_REBUILD: ${FORCE_REBUILD}" >> /tmp/build_info.txt
+RUN echo "CACHE_BUSTING_TIMESTAMP: $(date)" >> /tmp/build_info.txt
 RUN cat /tmp/build_info.txt
+
+# Nuclear option: Force Python module reload
+RUN find ./src -name "*.pyc" -delete && find ./src -name "__pycache__" -type d -exec rm -rf {} + || true
+RUN python3 -c "import sys; print('Python version:', sys.version)"
+RUN python3 -c "import os; print('Current working directory:', os.getcwd())"
 
 # Clear Python bytecode cache to prevent caching issues
 RUN find ./src -name "*.pyc" -delete && find ./src -name "__pycache__" -type d -exec rm -rf {} + || true
