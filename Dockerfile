@@ -5,6 +5,10 @@ FROM ubuntu:22.04
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONUNBUFFERED=1
 
+# Force rebuild - increment this number to invalidate cache
+ARG BUILD_VERSION=2.0
+ENV BUILD_VERSION=${BUILD_VERSION}
+
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     python3 \
