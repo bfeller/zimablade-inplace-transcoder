@@ -11,6 +11,9 @@ from datetime import datetime, timedelta
 from models.file_info import FileInfo
 from utils.helpers import get_video_info
 
+# Debug: Confirm this module is being loaded
+print("🔥🔥🔥 SCANNER MODULE LOADED - VERSION 2.0 🔥🔥🔥")
+
 
 class FileScanner:
     """Scans directories for files that need transcoding."""
@@ -47,7 +50,7 @@ class FileScanner:
     
     def scan_for_files(self) -> List[FileInfo]:
         """Scan configured directories for files that need transcoding."""
-        self.logger.info("DEBUG: scan_for_files() method called - VERSION 2.0 - INCREMENTAL DEBUG")
+        self.logger.info("🔥🔥🔥 SCANNER VERSION 2.0 - INCREMENTAL DEBUG - THIS SHOULD APPEAR 🔥🔥🔥")
         files_to_process = []
         
         if self.config.debug_mode:
