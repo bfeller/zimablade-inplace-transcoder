@@ -213,7 +213,13 @@ class Transcoder:
     def _build_command(self, input_path: str, output_path: str) -> list:
         """Build the FFmpeg command with input and output paths."""
         cmd = self.ffmpeg_cmd.copy()
-        cmd[4] = input_path  # Set input file (after -i flag)
+        
+        # Find the -i flag and set the input file after it
+        for i, arg in enumerate(cmd):
+            if arg == '-i':
+                cmd[i + 1] = input_path
+                break
+        
         cmd[-1] = output_path  # Set output file
         return cmd
     
