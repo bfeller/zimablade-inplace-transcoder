@@ -104,8 +104,13 @@ class Transcoder:
             # Use original_path for detection if provided, otherwise use input_path
             detection_path = original_path if original_path else input_path
             self.logger.info("Checking file for HDR/10-bit content: %s", detection_path)
-            has_hdr = self._has_hdr_content(detection_path)
-            self.logger.info("HDR/10-bit detection result: %s", has_hdr)
+            
+            try:
+                has_hdr = self._has_hdr_content(detection_path)
+                self.logger.info("HDR/10-bit detection result: %s", has_hdr)
+            except Exception as e:
+                self.logger.error("Error during HDR detection: %s", e, exc_info=True)
+                has_hdr = False  # Default to QSV if detection fails
             
             if has_hdr:
                 self.logger.info("File contains HDR/Dolby Vision content - using software encoding for better compatibility")
@@ -127,6 +132,8 @@ class Transcoder:
     
     def _has_hdr_content(self, input_path: str) -> bool:
         """Check if file contains HDR/Dolby Vision content."""
+        self.logger.info("_has_hdr_content() called with path: %s", input_path)
+        
         try:
             # Use ffprobe to check for HDR metadata
             cmd = [
@@ -138,6 +145,7 @@ class Transcoder:
                 input_path
             ]
             
+            self.logger.info("Running ffprobe command: %s", ' '.join(cmd))
             result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
             
             if result.returncode == 0:
@@ -168,14 +176,15 @@ class Transcoder:
                         side_data = stream.get('side_data_list', [])
                         for side_data_item in side_data:
                             if side_data_item.get('side_data_type') in ['Mastering display metadata', 'Content light level metadata']:
-                                self.logger.debug("HDR metadata found in stream")
+                                self.logger.info("HDR metadata found in stream")
                                 return True
                         
                         # Check for Dolby Vision
                         if 'dolby' in str(stream.get('tags', {})).lower():
-                            self.logger.debug("Dolby Vision metadata found")
+                            self.logger.info("Dolby Vision metadata found")
                             return True
                 
+                self.logger.info("No HDR/10-bit content detected")
                 return False
             else:
                 self.logger.warning("Could not analyze file for HDR content: %s", result.stderr)
