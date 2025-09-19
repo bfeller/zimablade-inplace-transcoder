@@ -5,9 +5,14 @@ services:
     build:
       context: .
       args:
-        BUILD_VERSION: 0.5.3-debug
+        BUILD_VERSION: 0.5.4-debug
     container_name: zimablade-transcoder
     restart: unless-stopped
+    
+    # User and group configuration (matching Jellyfin approach)
+    user: "1000:1000"
+    group_add:
+      - "992"  # render group for GPU access
     
     # Graceful shutdown configuration
     stop_grace_period: 60s
