@@ -7,19 +7,19 @@ ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 
 # Force rebuild - increment this number to invalidate cache
-ARG BUILD_VERSION=0.4.3-debug
+ARG BUILD_VERSION=0.4.4-debug
 ENV BUILD_VERSION=${BUILD_VERSION}
 ENV FORCE_REBUILD=${BUILD_VERSION}
 
-# Install basic system dependencies first
-RUN apt-get update && apt-get install -y \
-    python3 \
-    python3-pip \
-    curl \
-    gosu \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* \
-    && echo "Basic dependencies installed successfully"
+# Install packages one by one to identify the problematic package
+RUN apt-get update
+RUN apt-get install -y python3
+RUN apt-get install -y python3-pip
+RUN apt-get install -y curl
+RUN apt-get install -y sudo
+RUN apt-get clean
+RUN rm -rf /var/lib/apt/lists/*
+RUN echo "Basic dependencies installed successfully"
 
 # Install additional packages separately
 RUN apt-get update && apt-get install -y \

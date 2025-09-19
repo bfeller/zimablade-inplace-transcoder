@@ -13,4 +13,4 @@ chown -R ${PUID}:${PGID} /data
 chmod -R 755 /data
 
 # Switch to the non-root user and execute the main application
-exec gosu ${PUID}:${PGID} "$@"
+exec sudo -u "#${PUID}" -g "#${PGID}" "$@"
