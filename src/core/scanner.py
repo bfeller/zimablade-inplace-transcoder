@@ -35,15 +35,32 @@ class FileScanner:
         """Scan configured directories for files that need transcoding."""
         files_to_process = []
         
+        if self.config.debug_mode:
+            self.logger.info("DEBUG: Starting file scan...")
+            self.logger.info("DEBUG: Movies path: %s", self.config.movies_path)
+            self.logger.info("DEBUG: TV path: %s", self.config.tv_path)
+        
         # Scan movies directory
         if self.config.movies_path and os.path.exists(self.config.movies_path):
+            if self.config.debug_mode:
+                self.logger.info("DEBUG: Scanning movies directory: %s", self.config.movies_path)
             movie_files = self._scan_directory(self.config.movies_path, is_tv=False)
             files_to_process.extend(movie_files)
+            if self.config.debug_mode:
+                self.logger.info("DEBUG: Found %d movie files", len(movie_files))
+        elif self.config.debug_mode:
+            self.logger.info("DEBUG: Movies directory not found or not configured")
         
         # Scan TV shows directory
         if self.config.tv_path and os.path.exists(self.config.tv_path):
+            if self.config.debug_mode:
+                self.logger.info("DEBUG: Scanning TV directory: %s", self.config.tv_path)
             tv_files = self._scan_directory(self.config.tv_path, is_tv=True)
             files_to_process.extend(tv_files)
+            if self.config.debug_mode:
+                self.logger.info("DEBUG: Found %d TV files", len(tv_files))
+        elif self.config.debug_mode:
+            self.logger.info("DEBUG: TV directory not found or not configured")
         
         self.logger.info("Found %d files total for processing", len(files_to_process))
         return files_to_process
@@ -57,12 +74,33 @@ class FileScanner:
             self.logger.warning("Directory does not exist: %s", directory)
             return files
         
+        if self.config.debug_mode:
+            self.logger.info("DEBUG: Walking directory tree: %s", directory)
+        
+        file_count = 0
+        processed_count = 0
+        
         # Walk through directory recursively
         for file_path in directory_path.rglob('*'):
+            file_count += 1
+            
+            if self.config.debug_mode and file_count % 100 == 0:
+                self.logger.info("DEBUG: Scanned %d files, found %d candidates", file_count, processed_count)
+            
             if self._should_process_file(file_path):
+                processed_count += 1
+                if self.config.debug_mode:
+                    self.logger.info("DEBUG: Analyzing file: %s", file_path.name)
+                
                 file_info = self._analyze_file(file_path, is_tv)
                 if file_info and self._needs_transcoding(file_info):
                     files.append(file_info)
+                    if self.config.debug_mode:
+                        self.logger.info("DEBUG: Added to transcoding queue: %s", file_path.name)
+        
+        if self.config.debug_mode:
+            self.logger.info("DEBUG: Directory scan complete - %d total files, %d candidates, %d for transcoding", 
+                           file_count, processed_count, len(files))
         
         self.logger.info("Found %d files in %s", len(files), directory)
         return files
@@ -99,11 +137,21 @@ class FileScanner:
     def _analyze_file(self, file_path: Path, is_tv: bool) -> Optional[FileInfo]:
         """Analyze a file and return FileInfo if it's a valid video file."""
         try:
+            if self.config.debug_mode:
+                self.logger.info("DEBUG: Running ffprobe on: %s", file_path.name)
+            
             # Get video information using ffprobe
             video_info = get_video_info(str(file_path))
             
             if not video_info:
+                if self.config.debug_mode:
+                    self.logger.info("DEBUG: ffprobe returned no info for: %s", file_path.name)
                 return None
+            
+            if self.config.debug_mode:
+                self.logger.info("DEBUG: ffprobe success - %s: %dx%d, %s, %d kbps", 
+                               file_path.name, video_info.get('width', 0), video_info.get('height', 0),
+                               video_info.get('codec', 'unknown'), video_info.get('bitrate', 0) // 1000)
             
             # Create FileInfo object
             file_info = FileInfo(
@@ -123,6 +171,8 @@ class FileScanner:
             
         except Exception as e:
             self.logger.warning("Failed to analyze file %s: %s", file_path, e)
+            if self.config.debug_mode:
+                self.logger.info("DEBUG: Exception during analysis: %s", str(e))
             return None
     
     def _needs_transcoding(self, file_info: FileInfo) -> bool:
