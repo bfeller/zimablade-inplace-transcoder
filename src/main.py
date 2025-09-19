@@ -164,8 +164,8 @@ class ZimabladeTranscoder:
             output_filename = self._generate_output_filename(file_info)
             output_path = self.file_manager.get_output_path(output_filename)
             
-            # Transcode the file
-            success = self.transcoder.transcode(working_path, output_path)
+            # Transcode the file (pass original path for HDR detection)
+            success = self.transcoder.transcode(working_path, output_path, file_info.path)
             
             if success:
                 # Replace original file

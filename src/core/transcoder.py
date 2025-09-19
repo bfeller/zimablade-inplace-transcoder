@@ -86,7 +86,7 @@ class Transcoder:
             ''  # Output file (will be filled in)
         ]
     
-    def transcode(self, input_path: str, output_path: str) -> bool:
+    def transcode(self, input_path: str, output_path: str, original_path: str = None) -> bool:
         """Transcode a video file from input to output."""
         try:
             self.logger.info("Starting transcoding: %s -> %s", input_path, output_path)
@@ -101,8 +101,10 @@ class Transcoder:
             output_dir.mkdir(parents=True, exist_ok=True)
             
             # Check if file has HDR/Dolby Vision content that might not work with QSV
-            self.logger.info("Checking file for HDR/10-bit content: %s", input_path)
-            has_hdr = self._has_hdr_content(input_path)
+            # Use original_path for detection if provided, otherwise use input_path
+            detection_path = original_path if original_path else input_path
+            self.logger.info("Checking file for HDR/10-bit content: %s", detection_path)
+            has_hdr = self._has_hdr_content(detection_path)
             self.logger.info("HDR/10-bit detection result: %s", has_hdr)
             
             if has_hdr:
