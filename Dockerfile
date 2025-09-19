@@ -1,5 +1,5 @@
-# Use Ubuntu 24.04 LTS with newer FFmpeg from PPA
-FROM ubuntu:24.04
+# Use LinuxServer FFmpeg image as base (has Intel Quick Sync pre-configured)
+FROM lscr.io/linuxserver/ffmpeg:latest
 
 # Set environment variables
 ENV DEBIAN_FRONTEND=noninteractive
@@ -7,57 +7,20 @@ ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 
 # Force rebuild - increment this number to invalidate cache
-ARG BUILD_VERSION=0.4.7-debug
+ARG BUILD_VERSION=0.4.8-debug
 ENV BUILD_VERSION=${BUILD_VERSION}
 ENV FORCE_REBUILD=${BUILD_VERSION}
 
-# Install basic packages first with proper error handling
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install Python and basic tools
+# Install Python and basic tools (LinuxServer image already has FFmpeg with QSV)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 \
     python3-pip \
     python3-venv \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install additional system tools
-RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3-dev \
     curl \
     sudo \
-    software-properties-common \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
-
-# Install development tools
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    python3-dev \
-    build-essential \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install FFmpeg with QSV support from PPA (Ubuntu 24.04 compatible)
-RUN add-apt-repository ppa:savoury1/ffmpeg4 -y && \
-    apt-get update && \
-    apt-get install -y --no-install-recommends ffmpeg && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/* && \
-    echo "FFmpeg with QSV support installed successfully"
-
-# Install Intel media driver and VAAPI utilities (Ubuntu 24.04 compatible)
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    intel-media-va-driver-non-free \
-    vainfo \
-    libmfx1 \
-    libmfx-tools \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* \
-    && echo "Intel media driver and VAAPI utilities installed successfully" || \
-    echo "Intel media driver not available, skipping"
 
 # Create application directory
 WORKDIR /app
@@ -67,6 +30,12 @@ COPY requirements.txt .
 RUN python3 -m pip install --upgrade pip
 RUN python3 -m pip install --no-cache-dir -r requirements.txt
 RUN python3 -c "import requests, yaml; print('Dependencies installed successfully')"
+
+# Verify FFmpeg version and Intel Quick Sync support
+RUN ffmpeg -version | head -1
+RUN ffmpeg -encoders | grep -i qsv || echo "No QSV encoders found"
+RUN ffmpeg -hwaccels | grep -i qsv || echo "No QSV hardware acceleration found"
+RUN vainfo || echo "VAAPI not available"
 
 # Copy application code
 COPY src/ ./src/
