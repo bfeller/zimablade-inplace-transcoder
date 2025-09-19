@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Optional
 
 # Debug: Confirm this module is being loaded
-print("🚀🚀🚀 TRANSCODER MODULE LOADED - VERSION 0.3.6 🚀🚀🚀")
+print("🚀🚀🚀 TRANSCODER MODULE LOADED - VERSION 0.4.7 🚀🚀🚀")
 
 
 class Transcoder:
@@ -23,12 +23,14 @@ class Transcoder:
         # Test Intel Quick Sync availability
         self._test_intel_quicksync()
         
-        # FFmpeg command template - Intel Quick Sync with intelligent stream mapping
+        # FFmpeg command template - Intel Quick Sync with proper device initialization
         self.ffmpeg_cmd = [
             'ffmpeg',
+            '-init_hw_device', 'qsv=hw',  # Initialize QSV hardware device
+            '-filter_hw_device', 'hw',  # Use QSV hardware device for filters
             '-hwaccel', 'qsv',  # Intel Quick Sync hardware acceleration
             '-i', '',  # Input file (will be filled in)
-            '-vf', 'scale=1920:1080',  # Scale to 1080p using software (more compatible)
+            '-vf', 'hwupload=extra_hw_frames=64,format=qsv,scale_qsv=1920:1080',  # Upload to QSV and scale
             '-c:v', 'h264_qsv',  # H.264 encoder using QSV
             '-preset', 'medium',  # Encoding preset
             '-crf', str(self.config.crf_quality),  # Quality setting
@@ -52,9 +54,11 @@ class Transcoder:
                 
                 # Test device access with realistic scenario
                 try:
-                    # Test with software scaling + QSV encoding (our actual approach)
-                    device_test = subprocess.run(['ffmpeg', '-hwaccel', 'qsv', '-f', 'lavfi', '-i', 'testsrc=duration=0.1:size=1920x1080:rate=1', 
-                                                '-vf', 'scale=1280:720', '-c:v', 'h264_qsv', '-f', 'null', '-'], 
+                    # Test with proper QSV initialization (our actual approach)
+                    device_test = subprocess.run(['ffmpeg', '-init_hw_device', 'qsv=hw', '-filter_hw_device', 'hw',
+                                                '-f', 'lavfi', '-i', 'testsrc=duration=0.1:size=1920x1080:rate=1',
+                                                '-vf', 'hwupload=extra_hw_frames=64,format=qsv,scale_qsv=1280:720', 
+                                                '-c:v', 'h264_qsv', '-f', 'null', '-'],
                                                capture_output=True, text=True, timeout=15)
                     if device_test.returncode == 0:
                         self.logger.info("Intel Quick Sync device access test successful")
